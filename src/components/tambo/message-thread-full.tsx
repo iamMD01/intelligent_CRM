@@ -6,6 +6,7 @@ import {
   MessageInputError,
   MessageInputFileButton,
   MessageInputMcpPromptButton,
+  MessageInputMcpResourceButton,
   MessageInputSubmitButton,
   MessageInputTextarea,
   MessageInputToolbar,
@@ -16,10 +17,8 @@ import {
   MessageSuggestionsStatus,
 } from "@/components/tambo/message-suggestions";
 import { ScrollableMessageContainer } from "@/components/tambo/scrollable-message-container";
-import {
-  ThreadContainer,
-  useThreadContainerContext,
-} from "@/components/tambo/thread-container";
+import { MessageInputMcpConfigButton } from "@/components/tambo/message-input";
+import { ThreadContainer, useThreadContainerContext } from "./thread-container";
 import {
   ThreadContent,
   ThreadContentMessages,
@@ -39,10 +38,7 @@ import * as React from "react";
 /**
  * Props for the MessageThreadFull component
  */
-export interface MessageThreadFullProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  /** Optional context key for the thread */
-  contextKey?: string;
+export interface MessageThreadFullProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Controls the visual styling of messages in the thread.
    * Possible values include: "default", "compact", etc.
@@ -58,12 +54,12 @@ export interface MessageThreadFullProps
 export const MessageThreadFull = React.forwardRef<
   HTMLDivElement,
   MessageThreadFullProps
->(({ className, contextKey, variant, ...props }, ref) => {
+>(({ className, variant, ...props }, ref) => {
   const { containerRef, historyPosition } = useThreadContainerContext();
   const mergedRef = useMergeRefs<HTMLDivElement | null>(ref, containerRef);
 
   const threadHistorySidebar = (
-    <ThreadHistory contextKey={contextKey} position={historyPosition}>
+    <ThreadHistory position={historyPosition}>
       <ThreadHistoryHeader />
       <ThreadHistoryNewButton />
       <ThreadHistorySearch />
@@ -116,13 +112,14 @@ export const MessageThreadFull = React.forwardRef<
 
         {/* Message input */}
         <div className="px-4 pb-4">
-          <MessageInput contextKey={contextKey}>
+          <MessageInput>
             <MessageInputTextarea placeholder="Type your message or paste images..." />
             <MessageInputToolbar>
               <MessageInputFileButton />
               <MessageInputMcpPromptButton />
+              <MessageInputMcpResourceButton />
               {/* Uncomment this to enable client-side MCP config modal button */}
-              {/* <MessageInputMcpConfigButton /> */}
+              <MessageInputMcpConfigButton />
               <MessageInputSubmitButton />
             </MessageInputToolbar>
             <MessageInputError />
