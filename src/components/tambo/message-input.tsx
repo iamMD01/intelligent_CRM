@@ -158,17 +158,17 @@ function useCombinedResourceList(
     () =>
       mcpResources
         ? (
-            mcpResources as {
-              resource: { uri: string; name?: string };
-            }[]
-          ).map((entry) => ({
-            // Use the full URI (already includes serverKey prefix from MCP hook)
-            // When inserted as @{id}, parseResourceReferences will strip serverKey before sending to backend
-            id: entry.resource.uri,
-            name: entry.resource.name ?? entry.resource.uri,
-            icon: React.createElement(AtSign, { className: "w-4 h-4" }),
-            componentData: { type: "mcp-resource", data: entry },
-          }))
+          mcpResources as {
+            resource: { uri: string; name?: string };
+          }[]
+        ).map((entry) => ({
+          // Use the full URI (already includes serverKey prefix from MCP hook)
+          // When inserted as @{id}, parseResourceReferences will strip serverKey before sending to backend
+          id: entry.resource.uri,
+          name: entry.resource.name ?? entry.resource.uri,
+          icon: React.createElement(AtSign, { className: "w-4 h-4" }),
+          componentData: { type: "mcp-resource", data: entry },
+        }))
         : [],
     [mcpResources],
   );
@@ -233,11 +233,11 @@ function useCombinedPromptList(
     () =>
       mcpPrompts
         ? (mcpPrompts as { prompt: { name: string } }[]).map((entry) => ({
-            id: `mcp-prompt:${entry.prompt.name}`,
-            name: entry.prompt.name,
-            icon: React.createElement(FileText, { className: "w-4 h-4" }),
-            text: "", // Text will be fetched when selected via useTamboMcpPrompt
-          }))
+          id: `mcp-prompt:${entry.prompt.name}`,
+          name: entry.prompt.name,
+          icon: React.createElement(FileText, { className: "w-4 h-4" }),
+          text: "", // Text will be fetched when selected via useTamboMcpPrompt
+        }))
         : [],
     [mcpPrompts],
   );
@@ -307,6 +307,13 @@ const messageInputVariants = cva("w-full", {
         "[&>div]:shadow-none",
         "[&_textarea]:bg-transparent",
         "[&_textarea]:border-0",
+      ].join(" "),
+      ghost: [
+        "[&>div]:bg-transparent",
+        "[&>div]:border-0",
+        "[&>div]:shadow-none",
+        "[&>div]:p-0",
+        "[&>div]:ring-0",
       ].join(" "),
     },
   },
@@ -891,7 +898,7 @@ const MessageInputTextarea = ({
         resources={resourceItems}
         onSearchPrompts={setPromptSearch}
         prompts={promptItems}
-        onResourceSelect={onResourceSelect ?? (() => {})}
+        onResourceSelect={onResourceSelect ?? (() => { })}
         onPromptSelect={handlePromptSelect}
       />
     </div>
