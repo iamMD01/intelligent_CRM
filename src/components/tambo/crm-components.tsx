@@ -87,12 +87,12 @@ export const crmListSchema = z.object({
 
 export type CRMListProps = z.infer<typeof crmListSchema>;
 
-export const CRMList = ({ title, items, className }: CRMListProps) => {
+export const CRMList = ({ title, items = [], className }: CRMListProps) => {
     return (
         <div className={cn("p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm", className)}>
             <h3 className="text-zinc-900 dark:text-zinc-50 font-semibold text-lg mb-4">{title}</h3>
             <div className="space-y-3">
-                {items.map((item, idx) => (
+                {items?.map((item, idx) => (
                     <div key={item.id || idx} className="flex items-center justify-between group">
                         <div className="flex items-center gap-3">
                             {item.icon && (

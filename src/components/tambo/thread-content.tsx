@@ -168,7 +168,7 @@ const ThreadContentMessages = React.forwardRef<
                 <MessageContent
                   className={
                     message.role === "assistant"
-                      ? "text-white font-sans text-lg" // Forced white for dark mode chat
+                      ? "text-zinc-900 font-sans text-lg" // Updated for light mode
                       : "text-foreground bg-container hover:bg-backdrop font-sans"
                   }
                 />
