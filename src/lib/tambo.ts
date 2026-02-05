@@ -11,6 +11,7 @@ import {
   CRMList,
   crmListSchema,
 } from "@/components/tambo/crm-components";
+import { DataCard, dataCardSchema } from "@/components/ui/card-data";
 import type { TamboComponent } from "@tambo-ai/react";
 import { TamboTool } from "@tambo-ai/react";
 import { z } from "zod";
@@ -51,5 +52,11 @@ export const components: TamboComponent[] = [
     description: "Display a list of items, transactions, or tasks.",
     component: CRMList,
     propsSchema: crmListSchema,
+  },
+  {
+    name: "DataCard",
+    description: "Display selectable data cards with titles, descriptions, and optional links.",
+    component: DataCard,
+    propsSchema: dataCardSchema,
   },
 ];

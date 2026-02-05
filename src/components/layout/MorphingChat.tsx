@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTambo, useTamboThread, useTamboThreadList } from "@tambo-ai/react";
+import { useTambo, useTamboThread, useTamboThreadList, useTamboClient } from "@tambo-ai/react";
 import { Maximize2, Minimize2, Plus, History, X } from "lucide-react";
 import {
     MessageInput,
@@ -69,10 +69,40 @@ const MorphingChatContent = ({
 
     const [editingId, setEditingId] = React.useState<string | null>(null);
     const [editValue, setEditValue] = React.useState("");
+    const [hoveredThreadId, setHoveredThreadId] = React.useState<string | null>(null);
+
+    // Get Tambo client for delete operations
+    const client = useTamboClient();
 
     React.useEffect(() => {
         setHasMounted(true);
     }, []);
+
+    // Handle Delete key press when hovering over a thread
+    React.useEffect(() => {
+        const handleKeyDown = async (e: KeyboardEvent) => {
+            if (e.key === 'Delete' && hoveredThreadId && viewState === 'history') {
+                e.preventDefault();
+                await handleDeleteThread(hoveredThreadId);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [hoveredThreadId, viewState]);
+
+    const handleDeleteThread = async (threadId: string) => {
+        try {
+            await client.beta.threads.delete(threadId);
+            await refetchThreads();
+            // If we deleted the current thread, start a new one
+            if (threadId === currentThreadId) {
+                await startNewThread();
+            }
+        } catch (error) {
+            console.error("Failed to delete thread:", error);
+        }
+    };
 
     const handleCreateSession = async () => {
         try {
@@ -205,12 +235,20 @@ const MorphingChatContent = ({
                                     <div
                                         key={item.id}
                                         onClick={() => handleSelectSession(item.id)}
+                                        onContextMenu={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            startEditing(e, item);
+                                        }}
+                                        onMouseEnter={() => setHoveredThreadId(item.id)}
+                                        onMouseLeave={() => setHoveredThreadId(null)}
                                         className={cn(
                                             "flex items-center justify-between group p-2 -mx-2 rounded-xl transition-colors text-left cursor-pointer",
-                                            currentThreadId === item.id ? "bg-zinc-100" : "hover:bg-zinc-50"
+                                            currentThreadId === item.id ? "bg-zinc-100" : "hover:bg-zinc-50",
+                                            hoveredThreadId === item.id && "ring-1 ring-red-200"
                                         )}
                                     >
-                                        <div className="flex-1 mr-4" onClick={(e) => startEditing(e, item)}>
+                                        <div className="flex-1 mr-4">
                                             {editingId === item.id ? (
                                                 <input
                                                     className="w-full bg-transparent font-bold text-lg text-zinc-900 focus:outline-none border-b border-zinc-300"
@@ -219,6 +257,7 @@ const MorphingChatContent = ({
                                                     onBlur={saveTitle}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') saveTitle();
+                                                        if (e.key === 'Escape') setEditingId(null);
                                                     }}
                                                     autoFocus
                                                     onClick={(e) => e.stopPropagation()}
@@ -284,9 +323,13 @@ const MorphingChatContent = ({
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between p-6">
-                                <div className="flex-1 mr-4" onClick={(e) => {
-                                    if (thread) startEditing(e, thread);
-                                }}>
+                                <div
+                                    className="flex-1 mr-4"
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        if (thread) startEditing(e, thread);
+                                    }}
+                                >
                                     {editingId === currentThreadId && currentThreadId ? (
                                         <input
                                             className="w-full bg-transparent font-bold text-lg text-zinc-900 focus:outline-none border-b border-zinc-300"
@@ -295,6 +338,7 @@ const MorphingChatContent = ({
                                             onBlur={saveTitle}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') saveTitle();
+                                                if (e.key === 'Escape') setEditingId(null);
                                             }}
                                             autoFocus
                                             onClick={(e) => e.stopPropagation()}
