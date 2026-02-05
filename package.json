@@ -11,6 +11,8 @@
     "init": "npx tambo init"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-popover": "^1.1.15",
     "@tailwindcss/oxide": "^4.1.17",
@@ -37,7 +39,8 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.5.0",
     "streamdown": "^1.6.7",
-    "use-debounce": "^10.1.0"
+    "use-debounce": "^10.1.0",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
