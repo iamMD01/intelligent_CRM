@@ -2,7 +2,8 @@
 
 import { components, tools } from "@/lib/tambo";
 import { BentoGrid } from "@/components/layout/BentoGrid";
-import { MorphingChat } from "@/components/layout/MorphingChat";
+import { MorphingChatContent } from "@/components/layout/MorphingChat";
+import { TamboProvider } from "@tambo-ai/react";
 
 export default function DashboardPage() {
     const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
@@ -21,32 +22,34 @@ export default function DashboardPage() {
     }
 
     return (
-        <main className="min-h-screen bg-zinc-50 dark:bg-black text-foreground relative selection:bg-black selection:text-white">
+        <TamboProvider
+            apiKey={apiKey}
+            components={components}
+            tools={tools}
+        >
+            <main className="min-h-screen bg-zinc-50 dark:bg-black text-foreground relative selection:bg-black selection:text-white">
 
-            {/* Dashboard Header */}
-            <div className="absolute top-0 left-0 w-full p-8 flex justify-center pointer-events-none">
-                <div className="flex flex-col items-center">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-center text-zinc-900 dark:text-zinc-50 mix-blend-difference">
-                        Adaptable, Intelligent and Ever Evolving CRM
-                        <br />
-                        <span className="text-3xl md:text-4xl block mt-2 opacity-80">for your any Kind of Business</span>
-                    </h1>
-                    <p className="text-xs font-medium text-zinc-400 mt-4 uppercase tracking-widest">Apple studio style intro</p>
+                {/* Dashboard Header */}
+                <div className="absolute top-0 left-0 w-full p-8 flex justify-center pointer-events-none">
+                    <div className="flex flex-col items-center">
+                        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-center text-zinc-900 dark:text-zinc-50 mix-blend-difference">
+                            Adaptable, Intelligent and Ever Evolving CRM
+                            <br />
+                            <span className="text-3xl md:text-4xl block mt-2 opacity-80">for your any Kind of Business</span>
+                        </h1>
+                        <p className="text-xs font-medium text-zinc-400 mt-4 uppercase tracking-widest">Apple studio style intro</p>
+                    </div>
                 </div>
-            </div>
 
-            {/* Main Grid Canvas */}
-            <div className="pt-48 min-h-screen">
-                <BentoGrid />
-            </div>
+                {/* Main Grid Canvas */}
+                <div className="pt-48 min-h-screen">
+                    <BentoGrid />
+                </div>
 
-            {/* Morphing Chat Interface */}
-            <MorphingChat
-                apiKey={apiKey}
-                components={components}
-                tools={tools}
-            />
+                {/* Morphing Chat Interface - Uses shared TamboProvider context */}
+                <MorphingChatContent />
 
-        </main>
+            </main>
+        </TamboProvider>
     );
 }

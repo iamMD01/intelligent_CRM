@@ -1,73 +1,437 @@
 "use client";
 
-import React from "react";
-import { useCRMStore, CRMWidget } from "@/lib/crm-store";
-import { CRMStatCard, CRMChart, CRMList } from "@/components/tambo/crm-components";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence, useSpring } from "framer-motion";
+import { useCRMStore } from "@/lib/crm-store";
+import { useTambo } from "@tambo-ai/react";
 import { cn } from "@/lib/utils";
-import { Trash2, Edit2, Move } from "lucide-react";
+import { Trash2, MessageSquarePlus, Sparkles, GripVertical } from "lucide-react";
 
-const WidgetRenderer = ({ widget }: { widget: CRMWidget }) => {
-    const { removeWidget } = useCRMStore();
+// Widget position and size state
+interface WidgetLayout {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
 
-    const renderContent = () => {
-        switch (widget.type) {
-            case "stat":
-                return <CRMStatCard {...widget.data} className="h-full shadow-none border-0" />;
-            case "chart":
-                return <CRMChart {...widget.data} className="h-full shadow-none border-0" />;
-            case "list":
-                return <CRMList {...widget.data} className="h-full shadow-none border-0" />;
-            default:
-                return <div>Unknown widget type</div>;
+// Widget data
+interface CanvasWidgetData {
+    id: string;
+    messageId: string;
+    renderedComponent: React.ReactNode;
+    title: string;
+}
+
+// Jelly spring config
+const jellySpring = { stiffness: 400, damping: 25, mass: 0.8 };
+
+// Widget renderer - no background, direct content
+const WidgetRenderer = ({
+    widget,
+    layout,
+    onLayoutChange,
+    onContextMenu,
+    isSelected,
+    onRemove
+}: {
+    widget: CanvasWidgetData;
+    layout: WidgetLayout;
+    onLayoutChange: (newLayout: WidgetLayout) => void;
+    onContextMenu: (e: React.MouseEvent, widget: CanvasWidgetData) => void;
+    isSelected: boolean;
+    onRemove: () => void;
+}) => {
+    const widgetRef = useRef<HTMLDivElement>(null);
+    const [isHovered, setIsHovered] = useState(false);
+
+    // Use refs for drag state to avoid re-renders during drag
+    const isDragging = useRef(false);
+    const isResizing = useRef(false);
+    const resizeDir = useRef<string | null>(null);
+    const startPos = useRef({ x: 0, y: 0 });
+    const startLayout = useRef({ x: 0, y: 0, width: 0, height: 0 });
+
+    // Spring values for jelly effect
+    const scaleX = useSpring(1, jellySpring);
+    const scaleY = useSpring(1, jellySpring);
+
+    const triggerJelly = useCallback(() => {
+        scaleX.set(1.02);
+        scaleY.set(0.98);
+        setTimeout(() => {
+            scaleX.set(0.99);
+            scaleY.set(1.01);
+        }, 80);
+        setTimeout(() => {
+            scaleX.set(1);
+            scaleY.set(1);
+        }, 160);
+    }, [scaleX, scaleY]);
+
+    // Optimized drag using RAF
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (isDragging.current) {
+            const dx = e.clientX - startPos.current.x;
+            const dy = e.clientY - startPos.current.y;
+
+            // Direct DOM manipulation for smooth dragging
+            if (widgetRef.current) {
+                widgetRef.current.style.transform = `translate(${startLayout.current.x + dx}px, ${startLayout.current.y + dy}px) scaleX(${scaleX.get()}) scaleY(${scaleY.get()})`;
+            }
+        } else if (isResizing.current && resizeDir.current) {
+            const dx = e.clientX - startPos.current.x;
+            const dy = e.clientY - startPos.current.y;
+            const dir = resizeDir.current;
+            const minSize = 120;
+
+            let newWidth = startLayout.current.width;
+            let newHeight = startLayout.current.height;
+            let newX = startLayout.current.x;
+            let newY = startLayout.current.y;
+
+            if (dir.includes('e')) newWidth = Math.max(minSize, startLayout.current.width + dx);
+            if (dir.includes('w')) {
+                newWidth = Math.max(minSize, startLayout.current.width - dx);
+                newX = startLayout.current.x + (startLayout.current.width - newWidth);
+            }
+            if (dir.includes('s')) newHeight = Math.max(minSize, startLayout.current.height + dy);
+            if (dir.includes('n')) {
+                newHeight = Math.max(minSize, startLayout.current.height - dy);
+                newY = startLayout.current.y + (startLayout.current.height - newHeight);
+            }
+
+            if (widgetRef.current) {
+                widgetRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
+                widgetRef.current.style.width = `${newWidth}px`;
+                widgetRef.current.style.height = `${newHeight}px`;
+            }
         }
+    }, [scaleX, scaleY]);
+
+    const handleMouseUp = useCallback((e: MouseEvent) => {
+        if (isDragging.current) {
+            const dx = e.clientX - startPos.current.x;
+            const dy = e.clientY - startPos.current.y;
+            isDragging.current = false;
+            onLayoutChange({
+                ...layout,
+                x: startLayout.current.x + dx,
+                y: startLayout.current.y + dy
+            });
+            triggerJelly();
+        } else if (isResizing.current && resizeDir.current) {
+            const dx = e.clientX - startPos.current.x;
+            const dy = e.clientY - startPos.current.y;
+            const dir = resizeDir.current;
+            const minSize = 120;
+
+            let newLayout = { ...layout };
+
+            if (dir.includes('e')) newLayout.width = Math.max(minSize, startLayout.current.width + dx);
+            if (dir.includes('w')) {
+                newLayout.width = Math.max(minSize, startLayout.current.width - dx);
+                newLayout.x = startLayout.current.x + (startLayout.current.width - newLayout.width);
+            }
+            if (dir.includes('s')) newLayout.height = Math.max(minSize, startLayout.current.height + dy);
+            if (dir.includes('n')) {
+                newLayout.height = Math.max(minSize, startLayout.current.height - dy);
+                newLayout.y = startLayout.current.y + (startLayout.current.height - newLayout.height);
+            }
+
+            isResizing.current = false;
+            resizeDir.current = null;
+            onLayoutChange(newLayout);
+            triggerJelly();
+        }
+
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+    }, [layout, onLayoutChange, triggerJelly]);
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [handleMouseMove, handleMouseUp]);
+
+    const handleDragStart = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('[data-resize]')) return;
+        e.stopPropagation();
+        isDragging.current = true;
+        startPos.current = { x: e.clientX, y: e.clientY };
+        startLayout.current = { ...layout };
+        document.body.style.cursor = 'grabbing';
+        document.body.style.userSelect = 'none';
     };
 
+    const handleResizeStart = (e: React.MouseEvent, dir: string) => {
+        e.stopPropagation();
+        isResizing.current = true;
+        resizeDir.current = dir;
+        startPos.current = { x: e.clientX, y: e.clientY };
+        startLayout.current = { ...layout };
+        document.body.style.userSelect = 'none';
+    };
+
+    // Resize handle - small dots at corners
+    const ResizeHandle = ({ dir, className }: { dir: string; className: string }) => (
+        <div
+            data-resize
+            onMouseDown={(e) => handleResizeStart(e, dir)}
+            className={cn(
+                "absolute w-3 h-3 rounded-full bg-zinc-300 hover:bg-emerald-500 transition-colors opacity-0 group-hover:opacity-100 z-20 cursor-pointer",
+                className
+            )}
+            style={{
+                cursor: dir === 'se' || dir === 'nw' ? 'nwse-resize' :
+                    dir === 'sw' || dir === 'ne' ? 'nesw-resize' :
+                        dir === 'n' || dir === 's' ? 'ns-resize' : 'ew-resize'
+            }}
+        />
+    );
+
     return (
-        <div className={cn(
-            "group relative bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md",
-            widget.type === "chart" ? "col-span-1 md:col-span-2 row-span-2 min-h-[400px]" : "col-span-1 min-h-[200px]"
-        )}>
-            {/* Action Overlay */}
-            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-                    <Edit2 size={14} className="text-zinc-500" />
-                </button>
+        <div
+            ref={widgetRef}
+            onMouseDown={handleDragStart}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onContextMenu={(e) => onContextMenu(e, widget)}
+            data-widget="true"
+            className="group absolute cursor-grab active:cursor-grabbing"
+            style={{
+                transform: `translate(${layout.x}px, ${layout.y}px)`,
+                width: layout.width,
+                height: layout.height,
+                scaleX: scaleX.get(),
+                scaleY: scaleY.get(),
+            }}
+        >
+            {/* Selection ring */}
+            {isSelected && (
+                <div className="absolute -inset-1 rounded-2xl ring-2 ring-emerald-500 ring-offset-2 pointer-events-none" />
+            )}
+
+            {/* Floating action buttons */}
+            <div className={cn(
+                "absolute -top-2 -right-2 flex gap-1 transition-opacity z-30",
+                isHovered ? "opacity-100" : "opacity-0"
+            )}>
                 <button
-                    onClick={() => removeWidget(widget.id)}
-                    className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                    className="p-1.5 bg-white rounded-full shadow-lg border border-zinc-200 hover:bg-red-50 hover:border-red-200 transition-colors"
                 >
-                    <Trash2 size={14} className="text-red-500" />
+                    <Trash2 size={12} className="text-red-500" />
                 </button>
             </div>
 
-            {/* Content */}
-            <div className="h-full">
-                {renderContent()}
+            {/* Drag handle indicator */}
+            <div className={cn(
+                "absolute -top-2 -left-2 p-1 bg-white rounded-full shadow-lg border border-zinc-200 transition-opacity z-30",
+                isHovered ? "opacity-100" : "opacity-0"
+            )}>
+                <GripVertical size={10} className="text-zinc-400" />
             </div>
+
+            {/* Direct widget content - NO background! */}
+            <div className="w-full h-full overflow-hidden">
+                {widget.renderedComponent}
+            </div>
+
+            {/* Corner resize handles */}
+            <ResizeHandle dir="nw" className="-top-1.5 -left-1.5" />
+            <ResizeHandle dir="ne" className="-top-1.5 -right-1.5" />
+            <ResizeHandle dir="sw" className="-bottom-1.5 -left-1.5" />
+            <ResizeHandle dir="se" className="-bottom-1.5 -right-1.5" />
         </div>
     );
 };
 
+// Context menu
+const ContextMenu = ({ x, y, widget, onClose, onAddToChat }: {
+    x: number; y: number; widget: CanvasWidgetData; onClose: () => void; onAddToChat: () => void;
+}) => {
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+        };
+        const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('mousedown', handleClick);
+        document.addEventListener('keydown', handleKey);
+        return () => {
+            document.removeEventListener('mousedown', handleClick);
+            document.removeEventListener('keydown', handleKey);
+        };
+    }, [onClose]);
+
+    return (
+        <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            style={{ left: x, top: y }}
+            className="fixed z-[9999] bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-zinc-200/50 py-1.5 min-w-[160px]"
+        >
+            <button
+                onClick={() => { onAddToChat(); onClose(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-emerald-50 text-sm"
+            >
+                <MessageSquarePlus size={14} className="text-emerald-600" />
+                <span className="font-medium">Add to Chat</span>
+            </button>
+        </motion.div>
+    );
+};
+
+// Main Canvas
 export const BentoGrid = () => {
-    const { widgets } = useCRMStore();
+    const { thread } = useTambo();
+    const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat } = useCRMStore();
+
+    const canvasRef = useRef<HTMLDivElement>(null);
+    const isPanning = useRef(false);
+    const panStart = useRef({ x: 0, y: 0 });
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; widget: CanvasWidgetData } | null>(null);
+    const [isAnimatingCenter, setIsAnimatingCenter] = useState(false);
+    const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(new Set());
+    const [widgetLayouts, setWidgetLayouts] = useState<Record<string, WidgetLayout>>({});
+    const [, forceUpdate] = useState({});
+
+    // Extract widgets from thread
+    const widgets: CanvasWidgetData[] = React.useMemo(() => {
+        if (!thread?.messages) return [];
+        return thread.messages
+            .filter(msg => msg.role === 'assistant' && msg.renderedComponent && !msg.isCancelled && !hiddenMessageIds.has(msg.id))
+            .map(msg => ({ id: msg.id, messageId: msg.id, renderedComponent: msg.renderedComponent, title: `Widget ${msg.id.substring(0, 6)}` }));
+    }, [thread?.messages, hiddenMessageIds]);
+
+    // Init layouts
+    useEffect(() => {
+        let hasNew = false;
+        const newLayouts = { ...widgetLayouts };
+        widgets.forEach((w, i) => {
+            if (!newLayouts[w.id]) {
+                newLayouts[w.id] = { x: 60 + (i % 3) * 360, y: 60 + Math.floor(i / 3) * 300, width: 340, height: 260 };
+                hasNew = true;
+            }
+        });
+        if (hasNew) setWidgetLayouts(newLayouts);
+    }, [widgets]);
+
+    // Ctrl+F to center
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                setIsAnimatingCenter(true);
+                resetCanvasCenter();
+                setTimeout(() => setIsAnimatingCenter(false), 500);
+            }
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [resetCanvasCenter]);
+
+    // Canvas pan - optimized with direct DOM
+    const handlePanMove = useCallback((e: MouseEvent) => {
+        if (!isPanning.current || !canvasRef.current) return;
+        const dx = e.clientX - panStart.current.x;
+        const dy = e.clientY - panStart.current.y;
+        canvasRef.current.style.transform = `translate(${canvasOffset.x + dx}px, ${canvasOffset.y + dy}px)`;
+    }, [canvasOffset]);
+
+    const handlePanEnd = useCallback((e: MouseEvent) => {
+        if (!isPanning.current) return;
+        const dx = e.clientX - panStart.current.x;
+        const dy = e.clientY - panStart.current.y;
+        isPanning.current = false;
+        setCanvasOffset({ x: canvasOffset.x + dx, y: canvasOffset.y + dy });
+        document.body.style.cursor = '';
+    }, [canvasOffset, setCanvasOffset]);
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handlePanMove);
+        window.addEventListener('mouseup', handlePanEnd);
+        return () => {
+            window.removeEventListener('mousemove', handlePanMove);
+            window.removeEventListener('mouseup', handlePanEnd);
+        };
+    }, [handlePanMove, handlePanEnd]);
+
+    const handlePanStart = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('[data-widget]')) return;
+        if (e.button !== 0) return;
+        isPanning.current = true;
+        panStart.current = { x: e.clientX, y: e.clientY };
+        document.body.style.cursor = 'grabbing';
+    };
 
     if (widgets.length === 0) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-50">
+            <div data-canvas-space="true" className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh]">
                 <div className="max-w-md space-y-4">
-                    {/* Placeholder empty state */}
-                    <div className="text-lg font-medium text-zinc-400">Your canvas is empty</div>
-                    <p className="text-sm text-zinc-500">Ask the AI to create a chart, list, or stat card for you.</p>
+                    <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center mb-6 shadow-lg">
+                        <Sparkles size={32} className="text-emerald-500" />
+                    </div>
+                    <div className="text-xl font-semibold text-zinc-500">Your canvas is empty</div>
+                    <p className="text-sm text-zinc-400">Ask the AI to create a chart, list, or stat card.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 pb-32 max-w-[1800px] mx-auto auto-rows-[minmax(200px,auto)]">
-            {widgets.map((widget) => (
-                <WidgetRenderer key={widget.id} widget={widget} />
-            ))}
-        </div>
+        <>
+            <div
+                data-canvas-space="true"
+                className="relative min-h-screen overflow-hidden pb-32 cursor-grab active:cursor-grabbing"
+                onMouseDown={handlePanStart}
+            >
+                <div
+                    ref={canvasRef}
+                    className="relative w-full h-full"
+                    style={{
+                        transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+                        minHeight: '100vh',
+                        transition: isAnimatingCenter ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
+                    }}
+                >
+                    <AnimatePresence>
+                        {widgets.map((widget) => (
+                            <WidgetRenderer
+                                key={widget.id}
+                                widget={widget}
+                                layout={widgetLayouts[widget.id] || { x: 100, y: 100, width: 340, height: 260 }}
+                                onLayoutChange={(l) => setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }))}
+                                isSelected={selectedWidgetId === widget.id}
+                                onContextMenu={(e, w) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, widget: w }); }}
+                                onRemove={() => { setHiddenMessageIds(prev => new Set([...prev, widget.messageId])); if (selectedWidgetId === widget.messageId) selectWidgetForChat(null); }}
+                            />
+                        ))}
+                    </AnimatePresence>
+                </div>
+
+                <AnimatePresence>
+                    {isAnimatingCenter && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 bg-zinc-900 text-white rounded-full text-sm shadow-lg pointer-events-none z-50">
+                            Centered
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            <AnimatePresence>
+                {contextMenu && (
+                    <ContextMenu x={contextMenu.x} y={contextMenu.y} widget={contextMenu.widget} onClose={() => setContextMenu(null)} onAddToChat={() => { selectWidgetForChat(contextMenu.widget.id); setContextMenu(null); }} />
+                )}
+            </AnimatePresence>
+        </>
     );
 };

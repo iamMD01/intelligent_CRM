@@ -25,26 +25,28 @@ interface MorphingChatProps {
     tools?: any[];
 }
 
+// Legacy wrapper with its own provider (for backwards compatibility)
 export const MorphingChat = ({ apiKey, components, tools }: MorphingChatProps) => {
-    const [viewState, setViewState] = React.useState<"pill" | "chat" | "history">("pill");
-
-    // NO key={...} on TamboProvider - this preserves thread state across renders
     return (
         <TamboProvider
             apiKey={apiKey}
             components={components}
             tools={tools}
         >
-            <MorphingChatContent
-                viewState={viewState}
-                setViewState={setViewState}
-            />
+            <MorphingChatContent />
         </TamboProvider>
     );
 };
 
+// Exported content component that can be used with external TamboProvider
+export const MorphingChatContent = () => {
+    const [viewState, setViewState] = React.useState<"pill" | "chat" | "history">("pill");
+
+    return <MorphingChatInner viewState={viewState} setViewState={setViewState} />;
+};
+
 // Internal component that actually uses the Tambo hooks
-const MorphingChatContent = ({
+const MorphingChatInner = ({
     viewState, setViewState
 }: {
     viewState: "pill" | "chat" | "history";
@@ -73,6 +75,20 @@ const MorphingChatContent = ({
 
     // Get Tambo client for delete operations
     const client = useTamboClient();
+
+    // Get selected widget ID from store
+    const { selectedWidgetId, selectWidgetForChat } = useCRMStore();
+
+    // Find the selected widget from thread messages (not the store)
+    const selectedMessage = React.useMemo(() => {
+        if (!selectedWidgetId || !thread?.messages) return null;
+        return thread.messages.find(m => m.id === selectedWidgetId);
+    }, [selectedWidgetId, thread?.messages]);
+
+    // Dynamic placeholder based on selected widget
+    const inputPlaceholder = selectedMessage
+        ? `Edit this widget...`
+        : "Lets Make your intelligent CRM";
 
     React.useEffect(() => {
         setHasMounted(true);
@@ -365,6 +381,32 @@ const MorphingChatContent = ({
 
                             {/* Input Area (Separated Design) */}
                             <div className="p-6 pt-2">
+                                {/* Widget Selection Chip - Shows when a widget is selected for editing */}
+                                <AnimatePresence>
+                                    {selectedMessage && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="mb-3 flex items-center gap-2"
+                                        >
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-sm">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="font-medium text-emerald-700">
+                                                    Editing widget
+                                                </span>
+                                                <button
+                                                    onClick={() => selectWidgetForChat(null)}
+                                                    className="ml-1 p-0.5 hover:bg-emerald-100 rounded-full transition-colors"
+                                                    title="Deselect widget"
+                                                >
+                                                    <X size={14} className="text-emerald-600" />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
                                 <div className="flex items-center gap-3">
                                     {/* Input Pill */}
                                     <div className="flex-1 min-w-0">
@@ -372,15 +414,18 @@ const MorphingChatContent = ({
                                             className="min-h-[56px] flex items-center bg-zinc-50 border border-zinc-200 rounded-full px-4 text-zinc-900 transition-colors shadow-none [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:focus-within:ring-0 [&_[data-slot=input-group]]:focus-within:border-0"
                                             onSubmit={async () => {
                                                 if (!value.trim()) return;
+                                                // For now, just submit the message - Tambo will handle the component update
                                                 await submit({ streamResponse: true });
                                                 setValue("");
+                                                // Clear widget selection after submission
+                                                selectWidgetForChat(null);
                                             }}
                                         >
                                             <PromptInputTextarea
                                                 value={value}
                                                 onChange={(e) => setValue(e.target.value)}
                                                 className="text-[15px] font-medium leading-relaxed placeholder:font-medium min-h-[40px] bg-transparent border-0 focus:ring-0 resize-none text-zinc-900 placeholder:text-zinc-400 pt-3"
-                                                placeholder="Lets Make your intelligent CRM"
+                                                placeholder={inputPlaceholder}
                                             />
                                         </PromptInput>
                                     </div>
