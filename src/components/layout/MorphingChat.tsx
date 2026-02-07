@@ -98,6 +98,22 @@ const MorphingChatInner = ({
         setHasMounted(true);
     }, []);
 
+    // Track previous message count to detect new AI responses
+    const prevMessageCountRef = React.useRef<number>(0);
+
+    React.useEffect(() => {
+        if (!messages) return;
+        const currentCount = messages.length;
+        // If message count increased and the last message is from assistant, play received sound
+        if (currentCount > prevMessageCountRef.current && currentCount > 0) {
+            const lastMessage = messages[currentCount - 1];
+            if (lastMessage?.role === 'assistant') {
+                sounds.messageReceived();
+            }
+        }
+        prevMessageCountRef.current = currentCount;
+    }, [messages]);
+
     // Handle Delete key press when hovering over a thread
     React.useEffect(() => {
         const handleKeyDown = async (e: KeyboardEvent) => {
@@ -444,6 +460,8 @@ const MorphingChatInner = ({
                                             className="min-h-[56px] flex items-center bg-zinc-50 border border-zinc-200 rounded-full px-4 text-zinc-900 transition-colors shadow-none [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:focus-within:ring-0 [&_[data-slot=input-group]]:focus-within:border-0"
                                             onSubmit={async () => {
                                                 if (!value.trim()) return;
+                                                // Play message sent sound
+                                                sounds.messageSent();
                                                 // If a widget is selected, mark it for replacement
                                                 if (selectedWidgetId) {
                                                     setWidgetBeingReplaced(selectedWidgetId);

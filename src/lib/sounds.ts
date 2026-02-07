@@ -123,6 +123,19 @@ export const playErrorSound = () => {
     setTimeout(() => createSound(329.63, 0.2, 'sine', 0.08), 100); // E4
 };
 
+// Message Sent (WhatsApp style) - Quick ascending swoosh
+export const playMessageSentSound = () => {
+    createSound(523.25, 0.08, 'sine', 0.1); // C5
+    setTimeout(() => createSound(659.25, 0.06, 'sine', 0.08), 40); // E5
+    setTimeout(() => createSound(783.99, 0.05, 'sine', 0.06), 70); // G5
+};
+
+// Message Received (WhatsApp style) - Soft double pop
+export const playMessageReceivedSound = () => {
+    createSound(880, 0.1, 'triangle', 0.12); // A5 pop
+    setTimeout(() => createSound(1046.5, 0.08, 'triangle', 0.1), 80); // C6 higher pop
+};
+
 // ============================================
 // SOUND STATE MANAGEMENT
 // ============================================
@@ -156,6 +169,8 @@ export const sounds = {
     select: () => getSoundEnabled() && playSelectSound(),
     success: () => getSoundEnabled() && playSuccessSound(),
     error: () => getSoundEnabled() && playErrorSound(),
+    messageSent: () => getSoundEnabled() && playMessageSentSound(),
+    messageReceived: () => getSoundEnabled() && playMessageReceivedSound(),
 };
 
 export default sounds;
