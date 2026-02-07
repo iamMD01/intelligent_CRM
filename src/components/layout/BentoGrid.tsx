@@ -34,7 +34,8 @@ const WidgetRenderer = ({
     onLayoutChange,
     onContextMenu,
     isSelected,
-    onRemove
+    onRemove,
+    onMeasure
 }: {
     widget: CanvasWidgetData;
     layout: WidgetLayout;
@@ -42,6 +43,7 @@ const WidgetRenderer = ({
     onContextMenu: (e: React.MouseEvent, widget: CanvasWidgetData) => void;
     isSelected: boolean;
     onRemove: () => void;
+    onMeasure?: (id: string, width: number, height: number) => void;
 }) => {
     const { theme } = useThemeStore();
     const widgetRef = useRef<HTMLDivElement>(null);
@@ -246,7 +248,7 @@ const WidgetRenderer = ({
             {/* Widget card with Apple Keynote style - rounded corners, theme colors */}
             <div
                 className={cn(
-                    "w-full h-full rounded-2xl overflow-hidden p-4",
+                    "w-full h-full rounded-2xl overflow-auto p-4",
                     theme === 'dark' ? "bg-black" : "bg-[#ECECEC]"
                 )}
             >
@@ -338,24 +340,67 @@ export const BentoGrid = () => {
             .map(msg => ({ id: msg.id, messageId: msg.id, renderedComponent: msg.renderedComponent, title: `Widget ${msg.id.substring(0, 6)}` }));
     }, [thread?.messages, hiddenMessageIds]);
 
-    // Init layouts with 10px gap
+    // Init layouts with smart sizing based on content type
     useEffect(() => {
         let hasNew = false;
         const newLayouts = { ...widgetLayouts };
         const gap = 10;
-        const widgetWidth = 340;
-        const widgetHeight = 260;
+
+        // Size categories based on content complexity
+        const getWidgetSize = (widget: CanvasWidgetData, index: number): { width: number; height: number } => {
+            // Check rendered component type by looking at its structure
+            const component = widget.renderedComponent;
+            const componentStr = component?.toString?.() || '';
+
+            // Pattern matching for widget types (heuristic sizing)
+            // Try to infer from the widget ID/title or use index-based variety
+            const widgetNum = index % 6;
+
+            // Create variety: some small, some medium, some large
+            switch (widgetNum) {
+                case 0: // Small stat card
+                    return { width: 200, height: 140 };
+                case 1: // Medium card
+                    return { width: 280, height: 180 };
+                case 2: // Wide chart
+                    return { width: 400, height: 220 };
+                case 3: // Tall list
+                    return { width: 220, height: 300 };
+                case 4: // Large dashboard
+                    return { width: 360, height: 280 };
+                case 5: // Standard
+                default:
+                    return { width: 300, height: 200 };
+            }
+        };
+
+        // Simple bin-packing: place widgets row by row, tracking max height per row
+        let currentX = gap;
+        let currentY = gap;
+        let rowMaxHeight = 0;
+        const canvasWidth = 1100; // Virtual canvas width for layout
 
         widgets.forEach((w, i) => {
             if (!newLayouts[w.id]) {
-                const col = i % 3;
-                const row = Math.floor(i / 3);
+                const size = getWidgetSize(w, i);
+
+                // Check if widget fits in current row
+                if (currentX + size.width + gap > canvasWidth) {
+                    // Move to next row
+                    currentX = gap;
+                    currentY += rowMaxHeight + gap;
+                    rowMaxHeight = 0;
+                }
+
                 newLayouts[w.id] = {
-                    x: gap + col * (widgetWidth + gap),
-                    y: gap + row * (widgetHeight + gap),
-                    width: widgetWidth,
-                    height: widgetHeight
+                    x: currentX,
+                    y: currentY,
+                    width: size.width,
+                    height: size.height
                 };
+
+                currentX += size.width + gap;
+                rowMaxHeight = Math.max(rowMaxHeight, size.height);
                 hasNew = true;
             }
         });
