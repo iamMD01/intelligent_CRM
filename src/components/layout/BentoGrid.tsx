@@ -476,24 +476,32 @@ export const BentoGrid = () => {
             <div
                 data-canvas-space="true"
                 className={cn(
-                    "min-h-screen flex flex-col items-center justify-center p-8 text-center",
+                    "min-h-screen flex flex-col items-center justify-center p-8",
                     theme === 'dark' ? "bg-[#1A1A1A]" : "bg-[#ECECEC]"
                 )}
             >
-                <div className="max-w-md space-y-4">
-                    <div className={cn(
-                        "w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 shadow-lg",
-                        theme === 'dark' ? "bg-zinc-800" : "bg-gradient-to-br from-emerald-50 to-teal-100"
-                    )}>
-                        <Sparkles size={32} className="text-emerald-500" />
+                {/* HERO SECTION - Same as landing page */}
+                <section className="relative w-full max-w-6xl mx-auto rounded-[40px] overflow-hidden">
+
+                    {/* BACKGROUND GIF BAND */}
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[1200px] w-full rounded-[100px] overflow-hidden">
+                        <img
+                            src="/images/hero.gif"
+                            alt=""
+                            className="w-full h-full object-contain rotate-90"
+                        />
                     </div>
-                    <div className={cn("text-xl font-semibold", theme === 'dark' ? "text-zinc-400" : "text-zinc-500")}>
-                        Your canvas is empty
+
+                    {/* HERO CONTENT - Theme adaptive text */}
+                    <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-40">
+                        <img
+                            src="/images/hero-text.svg"
+                            alt="Generative CRM - A prompt-driven, AI-generated CRM for SaaS founders."
+                            className="w-full max-w-6xl h-auto"
+                        />
                     </div>
-                    <p className={cn("text-sm", theme === 'dark' ? "text-zinc-600" : "text-zinc-400")}>
-                        Ask the AI to create a chart, list, or stat card.
-                    </p>
-                </div>
+
+                </section>
             </div>
         );
     }

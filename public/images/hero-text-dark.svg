@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220">
+  <text x="600" y="120" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="900" font-size="150" fill="white" stroke="black" stroke-width="2">Generative CRM</text>
+  <text x="600" y="195" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="28" fill="white" stroke="black" stroke-width="0.5">A prompt-driven, AI-generated CRM for SaaS founders.</text>
+</svg>
