@@ -249,7 +249,7 @@ const WidgetRenderer = ({
             <div
                 className={cn(
                     "w-full h-full rounded-2xl overflow-auto p-4",
-                    theme === 'dark' ? "bg-black" : "bg-[#ECECEC]"
+                    theme === 'dark' ? "bg-black" : "bg-white"
                 )}
             >
                 {widget.renderedComponent}
@@ -465,7 +465,7 @@ export const BentoGrid = () => {
         return (
             <div
                 data-canvas-space="true"
-                className="min-h-screen bg-white dark:bg-[#1A1A1A]"
+                className="min-h-screen bg-[#ECECEC] dark:bg-[#1A1A1A]"
             />
         );
     }
@@ -477,7 +477,7 @@ export const BentoGrid = () => {
                 data-canvas-space="true"
                 className={cn(
                     "min-h-screen flex flex-col items-center justify-center p-8 text-center",
-                    theme === 'dark' ? "bg-[#1A1A1A]" : "bg-white"
+                    theme === 'dark' ? "bg-[#1A1A1A]" : "bg-[#ECECEC]"
                 )}
             >
                 <div className="max-w-md space-y-4">
@@ -505,7 +505,7 @@ export const BentoGrid = () => {
                 data-canvas-space="true"
                 className={cn(
                     "relative min-h-screen overflow-hidden pb-32 cursor-grab active:cursor-grabbing",
-                    theme === 'dark' ? "bg-[#1A1A1A]" : "bg-white"
+                    theme === 'dark' ? "bg-[#1A1A1A]" : "bg-[#ECECEC]"
                 )}
                 onMouseDown={handlePanStart}
             >

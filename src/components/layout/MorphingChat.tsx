@@ -16,7 +16,7 @@ import { useCRMStore } from "@/lib/crm-store";
 import { useThemeStore } from "@/lib/theme-store";
 import { PromptInput, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { useTamboThreadInput } from "@tambo-ai/react";
-
+import sounds from "@/lib/sounds";
 
 import { TamboProvider } from "@tambo-ai/react";
 
@@ -126,6 +126,7 @@ const MorphingChatInner = ({
 
     const handleCreateSession = async () => {
         try {
+            sounds.newChat();
             await startNewThread();
             await refetchThreads();
             setViewState("chat");
