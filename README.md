@@ -23,7 +23,6 @@
 Generative CRM is an **AI-powered, prompt-driven CRM** that lets you create dashboards, charts, stats, and data visualizations simply by chatting with an AI. No drag-and-drop builders, no complex configurations — just describe what you want, and watch it appear.
 
 ![Hero Demo](./public/images/demo-hero.gif)
-*Replace with your actual demo GIF showing the landing page*
 
 ---
 
