@@ -47,6 +47,9 @@ interface CanvasState {
     // Selected widget for chat editing
     selectedWidgetId: string | null;
 
+    // Widget being replaced (for in-place updates)
+    widgetBeingReplaced: string | null;
+
     // Canvas pan offset
     canvasOffset: { x: number; y: number };
 
@@ -59,6 +62,9 @@ interface CanvasState {
     selectWidgetForChat: (id: string | null) => void;
     getSelectedWidget: () => CanvasWidget | null;
 
+    // Widget replacement
+    setWidgetBeingReplaced: (id: string | null) => void;
+
     // Canvas pan
     setCanvasOffset: (offset: { x: number; y: number }) => void;
     resetCanvasCenter: () => void;
@@ -69,6 +75,7 @@ export const useCRMStore = create<CanvasState>()(
         (set, get) => ({
             widgets: [],
             selectedWidgetId: null,
+            widgetBeingReplaced: null,
             canvasOffset: { x: 0, y: 0 },
 
             addWidget: (widget, element) => {
@@ -106,6 +113,8 @@ export const useCRMStore = create<CanvasState>()(
                 const state = get();
                 return state.widgets.find(w => w.id === state.selectedWidgetId) || null;
             },
+
+            setWidgetBeingReplaced: (id) => set({ widgetBeingReplaced: id }),
 
             setCanvasOffset: (offset) => set({ canvasOffset: offset }),
 

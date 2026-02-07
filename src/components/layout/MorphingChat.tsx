@@ -81,7 +81,7 @@ const MorphingChatInner = ({
     const { theme, toggleTheme } = useThemeStore();
 
     // Get selected widget ID from store
-    const { selectedWidgetId, selectWidgetForChat } = useCRMStore();
+    const { selectedWidgetId, selectWidgetForChat, setWidgetBeingReplaced } = useCRMStore();
 
     // Find the selected widget from thread messages (not the store)
     const selectedMessage = React.useMemo(() => {
@@ -443,7 +443,10 @@ const MorphingChatInner = ({
                                             className="min-h-[56px] flex items-center bg-zinc-50 border border-zinc-200 rounded-full px-4 text-zinc-900 transition-colors shadow-none [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:focus-within:ring-0 [&_[data-slot=input-group]]:focus-within:border-0"
                                             onSubmit={async () => {
                                                 if (!value.trim()) return;
-                                                // For now, just submit the message - Tambo will handle the component update
+                                                // If a widget is selected, mark it for replacement
+                                                if (selectedWidgetId) {
+                                                    setWidgetBeingReplaced(selectedWidgetId);
+                                                }
                                                 await submit({ streamResponse: true });
                                                 setValue("");
                                                 // Clear widget selection after submission

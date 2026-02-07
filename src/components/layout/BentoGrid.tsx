@@ -316,7 +316,7 @@ const ContextMenu = ({ x, y, widget, onClose, onAddToChat }: {
 export const BentoGrid = () => {
     const { thread } = useTambo();
     const { theme } = useThemeStore();
-    const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat } = useCRMStore();
+    const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat, widgetBeingReplaced, setWidgetBeingReplaced } = useCRMStore();
 
     const canvasRef = useRef<HTMLDivElement>(null);
     const isPanning = useRef(false);
@@ -348,29 +348,17 @@ export const BentoGrid = () => {
 
         // Size categories based on content complexity
         const getWidgetSize = (widget: CanvasWidgetData, index: number): { width: number; height: number } => {
-            // Check rendered component type by looking at its structure
-            const component = widget.renderedComponent;
-            const componentStr = component?.toString?.() || '';
-
             // Pattern matching for widget types (heuristic sizing)
-            // Try to infer from the widget ID/title or use index-based variety
             const widgetNum = index % 6;
 
             // Create variety: some small, some medium, some large
             switch (widgetNum) {
-                case 0: // Small stat card
-                    return { width: 200, height: 140 };
-                case 1: // Medium card
-                    return { width: 280, height: 180 };
-                case 2: // Wide chart
-                    return { width: 400, height: 220 };
-                case 3: // Tall list
-                    return { width: 220, height: 300 };
-                case 4: // Large dashboard
-                    return { width: 360, height: 280 };
-                case 5: // Standard
-                default:
-                    return { width: 300, height: 200 };
+                case 0: return { width: 200, height: 140 };
+                case 1: return { width: 280, height: 180 };
+                case 2: return { width: 400, height: 220 };
+                case 3: return { width: 220, height: 300 };
+                case 4: return { width: 360, height: 280 };
+                default: return { width: 300, height: 200 };
             }
         };
 
@@ -378,15 +366,32 @@ export const BentoGrid = () => {
         let currentX = gap;
         let currentY = gap;
         let rowMaxHeight = 0;
-        const canvasWidth = 1100; // Virtual canvas width for layout
+        const canvasWidth = 1100;
+
+        // Check if we're replacing a widget
+        const replacingId = widgetBeingReplaced;
+        const oldLayout = replacingId ? widgetLayouts[replacingId] : null;
 
         widgets.forEach((w, i) => {
             if (!newLayouts[w.id]) {
+                // Check if this new widget should inherit position from replaced widget
+                if (replacingId && oldLayout && !hiddenMessageIds.has(w.id)) {
+                    // This is the replacement widget - use old widget's position and size
+                    newLayouts[w.id] = { ...oldLayout };
+
+                    // Hide the old widget
+                    setHiddenMessageIds(prev => new Set([...prev, replacingId]));
+
+                    // Clear the replacement state
+                    setWidgetBeingReplaced(null);
+                    hasNew = true;
+                    return;
+                }
+
                 const size = getWidgetSize(w, i);
 
                 // Check if widget fits in current row
                 if (currentX + size.width + gap > canvasWidth) {
-                    // Move to next row
                     currentX = gap;
                     currentY += rowMaxHeight + gap;
                     rowMaxHeight = 0;
@@ -405,7 +410,7 @@ export const BentoGrid = () => {
             }
         });
         if (hasNew) setWidgetLayouts(newLayouts);
-    }, [widgets]);
+    }, [widgets, widgetBeingReplaced]);
 
     // Ctrl+F to center
     useEffect(() => {
