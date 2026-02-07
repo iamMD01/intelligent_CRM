@@ -492,7 +492,7 @@ export const BentoGrid = () => {
                         />
                     </div>
 
-                    {/* HERO CONTENT - Theme adaptive text */}
+                    {/* HERO CONTENT */}
                     <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-40">
                         <img
                             src="/images/hero-text.svg"
@@ -502,6 +502,24 @@ export const BentoGrid = () => {
                     </div>
 
                 </section>
+
+                {/* INSTRUCTION MESSAGE */}
+                <div className={cn(
+                    "mt-8 text-center max-w-lg mx-auto",
+                    theme === 'dark' ? "text-zinc-400" : "text-zinc-600"
+                )}>
+                    <p className="text-lg font-bold mb-2">
+                        👋 Start by chatting with AI
+                    </p>
+                    <p className={cn(
+                        "text-bold",
+                        theme === 'dark' ? "text-zinc-500" : "text-zinc-500"
+                    )}>
+                        Use the chat island below to create charts, stats, lists, and more.
+                        <br />
+                        Try: <span className="font-bold">"Create a revenue chart"</span> or <span className="font-bold">"Show me customer stats"</span>
+                    </p>
+                </div>
             </div>
         );
     }
