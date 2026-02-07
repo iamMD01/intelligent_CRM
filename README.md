@@ -10,6 +10,8 @@
 [![TailwindCSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+> 🔧 **Built on [Tambo AI Starter Template](https://github.com/tambo-ai/tambo-template)** — The fastest way to build AI-powered apps with Next.js
+
 **Build your entire CRM dashboard just by describing what you need.**
 
 [Live Demo](#) • [Documentation](#documentation) • [Report Bug](issues) • [Request Feature](issues)
