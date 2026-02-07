@@ -1,131 +1,322 @@
-# Tambo Template
+<div align="center">
 
-This is a starter NextJS app with Tambo hooked up to get your AI app development started quickly.
+# 🚀 Generative CRM
 
-## Get Started
+### A prompt-driven, AI-generated CRM for SaaS founders.
 
-1. Run `npm create-tambo@latest my-tambo-app` for a new project
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-2. `npm install`
+**Build your entire CRM dashboard just by describing what you need.**
 
-3. `npx tambo init`
+[Live Demo](#) • [Documentation](#documentation) • [Report Bug](issues) • [Request Feature](issues)
 
-- or rename `example.env.local` to `.env.local` and add your tambo API key you can get for free [here](https://tambo.co/dashboard).
+</div>
 
-4. Run `npm run dev` and go to `localhost:3000` to use the app!
+---
 
-## Customizing
+## ✨ What is Generative CRM?
 
-### Change what components tambo can control
+Generative CRM is an **AI-powered, prompt-driven CRM** that lets you create dashboards, charts, stats, and data visualizations simply by chatting with an AI. No drag-and-drop builders, no complex configurations — just describe what you want, and watch it appear.
 
-You can see how components are registered with tambo in `src/lib/tambo.ts`:
+![Hero Demo](./public/images/demo-hero.gif)
+*Replace with your actual demo GIF showing the landing page*
+
+---
+
+## 🎬 See It In Action
+
+### Creating Widgets with Natural Language
+![Widget Creation](./public/images/demo-widget-creation.gif)
+*Replace with GIF showing: "Create a revenue chart for the last 6 months"*
+
+### Editing Widgets Through Conversation
+![Widget Editing](./public/images/demo-widget-editing.gif)
+*Replace with GIF showing: selecting a widget and asking AI to modify it*
+
+### Multi-Canvas Dashboard Management
+![Multiple Canvases](./public/images/demo-canvas.gif)
+*Replace with GIF showing creation and switching between conversation threads/canvases*
+
+---
+
+## 🌟 Features
+
+### 🤖 AI-Powered Widget Generation
+- **Natural Language Interface** — Describe what you need in plain English
+- **Smart Context Understanding** — The AI understands your data and generates relevant visualizations
+- **Widget Editing** — Select any widget and ask the AI to modify, update, or replace it
+
+### 📊 Rich Widget Library
+| Widget Type | Description |
+|-------------|-------------|
+| 📈 **Charts** | Bar, Line, Pie, Area charts with Recharts |
+| 📋 **Stats Cards** | Key metrics with trends and comparisons |
+| 📝 **Lists** | Sortable, filterable data lists |
+| 🎯 **Custom** | Any component the AI generates |
+
+### 🎨 Beautiful Canvas System
+- **Drag & Drop** — Freely position widgets anywhere on the canvas
+- **Resize** — Adjust widget sizes to your preference
+- **Infinite Canvas** — Pan around with mouse drag (Ctrl+F to center)
+- **Persistent Layouts** — Your layouts stay where you put them
+
+### 💬 Conversational Interface
+- **Floating Chat Island** — Minimal, always-accessible chat UI
+- **Thread History** — Multiple conversation threads, each with its own canvas
+- **Voice Input** — Speak your commands with built-in speech-to-text
+- **Context-Aware Editing** — Select a widget and chat directly about it
+
+### 🎵 Delightful UX
+- **Sound Effects** — WhatsApp-style audio feedback for all interactions
+- **Smooth Animations** — Framer Motion powered transitions
+- **Theme Support** — Light/Dark mode with one click
+- **Responsive Design** — Works on desktop and tablet
+
+---
+
+## 🛠️ Tech Stack
+
+### Core Framework
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| [Next.js](https://nextjs.org/) | 15.5 | React framework with App Router |
+| [React](https://react.dev/) | 19 | UI library |
+| [TypeScript](https://www.typescriptlang.org/) | 5 | Type safety |
+
+### AI & Chat
+| Technology | Purpose |
+|------------|---------|
+| [Tambo AI](https://tambo.co/) | AI-powered component generation |
+| [@tambo-ai/react](https://www.npmjs.com/package/@tambo-ai/react) | React hooks for Tambo |
+
+### UI & Styling
+| Technology | Purpose |
+|------------|---------|
+| [TailwindCSS](https://tailwindcss.com/) | Utility-first CSS |
+| [Framer Motion](https://www.framer.com/motion/) | Animations |
+| [Radix UI](https://www.radix-ui.com/) | Accessible UI primitives |
+| [Lucide React](https://lucide.dev/) | Icon library |
+
+### Data Visualization
+| Technology | Purpose |
+|------------|---------|
+| [Recharts](https://recharts.org/) | Charts and graphs |
+
+### State Management
+| Technology | Purpose |
+|------------|---------|
+| [Zustand](https://zustand-demo.pmnd.rs/) | Lightweight state management |
+
+### Rich Text
+| Technology | Purpose |
+|------------|---------|
+| [Tiptap](https://tiptap.dev/) | Rich text editor for chat input |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm, yarn, or pnpm
+- A [Tambo AI](https://tambo.co/dashboard) API key (free tier available)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/iamMD01/intelligent_CRM.git
+   cd intelligent_CRM
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   # Copy the example env file
+   cp example.env.local .env.local
+   
+   # Add your Tambo API key
+   NEXT_PUBLIC_TAMBO_API_KEY=your_api_key_here
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open [http://localhost:3000](http://localhost:3000)** in your browser
+
+---
+
+## 📖 Documentation
+
+### Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Landing page
+│   ├── dashboard/         # Main dashboard
+│   └── layout.tsx         # Root layout
+├── components/
+│   ├── layout/
+│   │   ├── BentoGrid.tsx  # Canvas widget system
+│   │   └── MorphingChat.tsx # Chat interface
+│   ├── ui/                # Reusable UI components
+│   └── ai-elements/       # AI-specific components
+├── lib/
+│   ├── sounds.ts          # Sound effects system
+│   ├── crm-store.ts       # Zustand store
+│   ├── theme-store.ts     # Theme state
+│   └── tambo.ts           # Tambo configuration
+└── public/
+    └── images/            # Static assets
+```
+
+### Key Components
+
+#### BentoGrid
+The main canvas system that renders and manages widgets:
+- Drag & drop positioning
+- Resize handles
+- Context menu (right-click)
+- Widget selection for AI editing
+
+#### MorphingChat
+The floating chat interface:
+- Pill → Chat → History morphing states
+- Thread management
+- Voice input support
+- Dark/light theme toggle
+
+### Adding Custom Widgets
+
+Register new widget types in `src/lib/tambo.ts`:
 
 ```tsx
 export const components: TamboComponent[] = [
   {
-    name: "Graph",
-    description:
-      "A component that renders various types of charts (bar, line, pie) using Recharts. Supports customizable data visualization with labels, datasets, and styling options.",
-    component: Graph,
-    propsSchema: graphSchema,
-  },
-  // Add more components here
-];
-```
-
-You can install the graph component into any project with:
-
-```bash
-npx tambo add graph
-```
-
-The example Graph component demonstrates several key features:
-
-- Different prop types (strings, arrays, enums, nested objects)
-- Multiple chart types (bar, line, pie)
-- Customizable styling (variants, sizes)
-- Optional configurations (title, legend, colors)
-- Data visualization capabilities
-
-Update the `components` array with any component(s) you want tambo to be able to use in a response!
-
-You can find more information about the options [here](https://docs.tambo.co/concepts/generative-interfaces/generative-components)
-
-### Add tools for tambo to use
-
-Tools are defined with `inputSchema` and `outputSchema`:
-
-```tsx
-export const tools: TamboTool[] = [
-  {
-    name: "globalPopulation",
-    description:
-      "A tool to get global population trends with optional year range filtering",
-    tool: getGlobalPopulationTrend,
-    inputSchema: z.object({
-      startYear: z.number().optional(),
-      endYear: z.number().optional(),
-    }),
-    outputSchema: z.array(
-      z.object({
-        year: z.number(),
-        population: z.number(),
-        growthRate: z.number(),
-      }),
-    ),
+    name: "MyCustomWidget",
+    description: "Description for the AI to understand when to use it",
+    component: MyCustomWidget,
+    propsSchema: myWidgetSchema,
   },
 ];
 ```
 
-Find more information about tools [here.](https://docs.tambo.co/concepts/tools)
+### Sound Effects
 
-### The Magic of Tambo Requires the TamboProvider
-
-Make sure in the TamboProvider wrapped around your app:
+The app includes a custom Web Audio API sound system:
 
 ```tsx
-...
-<TamboProvider
-  apiKey={process.env.NEXT_PUBLIC_TAMBO_API_KEY!}
-  components={components} // Array of components to control
-  tools={tools} // Array of tools it can use
->
-  {children}
-</TamboProvider>
+import { sounds } from "@/lib/sounds";
+
+// Available sounds
+sounds.create();        // Widget created
+sounds.update();        // Widget updated
+sounds.delete();        // Widget deleted
+sounds.messageSent();   // Message sent (WhatsApp style)
+sounds.messageReceived(); // AI response received
+sounds.newChat();       // New chat created
+sounds.addToChat();     // Widget added to chat context
 ```
 
-In this example we do this in the `Layout.tsx` file, but you can do it anywhere in your app that is a client component.
+---
 
-### Voice input
+## 🎯 Usage Examples
 
-The template includes a `DictationButton` component using the `useTamboVoice` hook for speech-to-text input.
+### Creating Charts
+```
+"Create a bar chart showing monthly revenue from January to June"
+"Show me a pie chart of customer segments"
+"Generate a line chart of user growth over the last year"
+```
 
-### MCP (Model Context Protocol)
+### Creating Stats
+```
+"Show total revenue with 23% growth"
+"Create a stat card for active users showing 1,234"
+"Display conversion rate at 4.5%"
+```
 
-The template includes MCP support for connecting to external tools and resources. You can use the MCP hooks from `@tambo-ai/react/mcp`:
+### Editing Widgets
+1. Click on any widget to select it
+2. The chat placeholder changes to "Edit this widget..."
+3. Say what you want to change:
+   - "Change this to a line chart"
+   - "Add a title: Monthly Revenue"
+   - "Update the colors to blue and purple"
 
-- `useTamboMcpPromptList` - List available prompts from MCP servers
-- `useTamboMcpPrompt` - Get a specific prompt
-- `useTamboMcpResourceList` - List available resources
+---
 
-See `src/components/tambo/mcp-components.tsx` for example usage.
+## ⌨️ Keyboard Shortcuts
 
-### Change where component responses are shown
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + F` | Center canvas view |
+| `Delete` | Delete hovered thread (in history view) |
+| `Enter` | Send message |
+| `Shift + Enter` | New line in message |
 
-The components used by tambo are shown alongside the message response from tambo within the chat thread, but you can have the result components show wherever you like by accessing the latest thread message's `renderedComponent` field:
+---
 
+## 🎨 Customization
+
+### Themes
+Toggle between light and dark mode using the button in the chat interface. The theme persists across sessions.
+
+### Colors
+Modify the color scheme in `globals.css` and `tailwind.config.ts`.
+
+### Sound Effects
+Enable/disable sounds programmatically:
 ```tsx
-const { thread } = useTambo();
-const latestComponent =
-  thread?.messages[thread.messages.length - 1]?.renderedComponent;
-
-return (
-  <div>
-    {latestComponent && (
-      <div className="my-custom-wrapper">{latestComponent}</div>
-    )}
-  </div>
-);
+import { setSoundEnabled } from "@/lib/sounds";
+setSoundEnabled(false); // Mute all sounds
 ```
 
-For more detailed documentation, visit [Tambo's official docs](https://docs.tambo.co).
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Tambo AI](https://tambo.co/) for the incredible AI SDK
+- [Vercel](https://vercel.com/) for Next.js and hosting
+- [Radix UI](https://www.radix-ui.com/) for accessible component primitives
+- [Recharts](https://recharts.org/) for beautiful charts
+
+---
+
+<div align="center">
+
+**Built with ❤️ by [iamMD01](https://github.com/iamMD01)**
+
+⭐ Star this repo if you find it useful!
+
+</div>
