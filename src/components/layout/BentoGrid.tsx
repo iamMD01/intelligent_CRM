@@ -7,6 +7,7 @@ import { useThemeStore } from "@/lib/theme-store";
 import { useTambo } from "@tambo-ai/react";
 import { cn } from "@/lib/utils";
 import { Trash2, MessageSquarePlus, Sparkles, GripVertical } from "lucide-react";
+import { sounds } from "@/lib/sounds";
 
 // Widget position and size state
 interface WidgetLayout {
@@ -409,7 +410,15 @@ export const BentoGrid = () => {
                 hasNew = true;
             }
         });
-        if (hasNew) setWidgetLayouts(newLayouts);
+        if (hasNew) {
+            // Play sound: update if replacing, create if new
+            if (widgetBeingReplaced) {
+                sounds.update();
+            } else {
+                sounds.create();
+            }
+            setWidgetLayouts(newLayouts);
+        }
     }, [widgets, widgetBeingReplaced]);
 
     // Ctrl+F to center
@@ -553,7 +562,7 @@ export const BentoGrid = () => {
                                 onLayoutChange={(l) => setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }))}
                                 isSelected={selectedWidgetId === widget.id}
                                 onContextMenu={(e, w) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, widget: w }); }}
-                                onRemove={() => { setHiddenMessageIds(prev => new Set([...prev, widget.messageId])); if (selectedWidgetId === widget.messageId) selectWidgetForChat(null); }}
+                                onRemove={() => { sounds.delete(); setHiddenMessageIds(prev => new Set([...prev, widget.messageId])); if (selectedWidgetId === widget.messageId) selectWidgetForChat(null); }}
                             />
                         ))}
                     </AnimatePresence>
@@ -578,7 +587,7 @@ export const BentoGrid = () => {
 
             <AnimatePresence>
                 {contextMenu && (
-                    <ContextMenu x={contextMenu.x} y={contextMenu.y} widget={contextMenu.widget} onClose={() => setContextMenu(null)} onAddToChat={() => { selectWidgetForChat(contextMenu.widget.id); setContextMenu(null); }} />
+                    <ContextMenu x={contextMenu.x} y={contextMenu.y} widget={contextMenu.widget} onClose={() => setContextMenu(null)} onAddToChat={() => { sounds.addToChat(); selectWidgetForChat(contextMenu.widget.id); setContextMenu(null); }} />
                 )}
             </AnimatePresence>
         </>
