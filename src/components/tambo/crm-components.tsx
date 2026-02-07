@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Graph, graphSchema } from "./graph";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, MoreHorizontal, Plus } from "lucide-react";
 import { useCRMStore, CRMWidget } from "@/lib/crm-store";
+import { useThemeStore } from "@/lib/theme-store";
 
 // --- CRM Stat Card ---
 
@@ -22,14 +23,22 @@ export const crmStatCardSchema = z.object({
 export type CRMStatCardProps = z.infer<typeof crmStatCardSchema>;
 
 export const CRMStatCard = ({ title, value, trend, trendDirection = "neutral", subtext, className }: CRMStatCardProps) => {
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+
     return (
-        <div className={cn("p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm", className)}>
+        <div className={cn("p-4 rounded-2xl h-full", className)}>
             <div className="flex justify-between items-start mb-4">
-                <h3 className="text-zinc-500 font-medium text-sm uppercase tracking-wide">{title}</h3>
+                <h3 className={cn(
+                    "font-medium text-sm uppercase tracking-wide",
+                    isDark ? "text-zinc-400" : "text-zinc-500"
+                )}>{title}</h3>
                 {trendDirection !== "neutral" && (
                     <div className={cn(
                         "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
-                        trendDirection === "up" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        trendDirection === "up"
+                            ? isDark ? "bg-green-900/50 text-green-400" : "bg-green-100 text-green-700"
+                            : isDark ? "bg-red-900/50 text-red-400" : "bg-red-100 text-red-700"
                     )}>
                         {trendDirection === "up" ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                         <span>{trend}</span>
@@ -37,8 +46,11 @@ export const CRMStatCard = ({ title, value, trend, trendDirection = "neutral", s
                 )}
             </div>
             <div className="flex flex-col gap-1">
-                <span className="text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{value}</span>
-                {subtext && <span className="text-sm text-zinc-400">{subtext}</span>}
+                <span className={cn(
+                    "text-4xl font-semibold tracking-tight",
+                    isDark ? "text-white" : "text-zinc-900"
+                )}>{value}</span>
+                {subtext && <span className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-400")}>{subtext}</span>}
             </div>
         </div>
     );
@@ -53,16 +65,21 @@ export const crmChartSchema = graphSchema.extend({
 export type CRMChartProps = z.infer<typeof crmChartSchema>;
 
 export const CRMChart = (props: CRMChartProps) => {
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+
     return (
-        <div className={cn("p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col h-full", props.className)}>
-            <div className="flex justify-between items-center mb-6">
+        <div className={cn("p-4 rounded-2xl overflow-hidden flex flex-col h-full", props.className)}>
+            <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h3 className="text-zinc-900 dark:text-zinc-50 font-semibold text-lg">{props.title}</h3>
-                    {props.description && <p className="text-zinc-400 text-sm">{props.description}</p>}
+                    <h3 className={cn(
+                        "font-semibold text-lg",
+                        isDark ? "text-white" : "text-zinc-900"
+                    )}>{props.title}</h3>
+                    {props.description && <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-400")}>{props.description}</p>}
                 </div>
             </div>
             <div className="flex-1 w-full min-h-[200px]">
-                {/* Reusing the robust Graph component but stripping its wrapper padding if needed */}
                 <Graph {...props} className="h-full !p-0 !bg-transparent !shadow-none !border-none" />
             </div>
         </div>
@@ -88,26 +105,39 @@ export const crmListSchema = z.object({
 export type CRMListProps = z.infer<typeof crmListSchema>;
 
 export const CRMList = ({ title, items = [], className }: CRMListProps) => {
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+
     return (
-        <div className={cn("p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm", className)}>
-            <h3 className="text-zinc-900 dark:text-zinc-50 font-semibold text-lg mb-4">{title}</h3>
+        <div className={cn("p-4 rounded-2xl h-full", className)}>
+            <h3 className={cn(
+                "font-semibold text-lg mb-4",
+                isDark ? "text-white" : "text-zinc-900"
+            )}>{title}</h3>
             <div className="space-y-3">
                 {items?.map((item, idx) => (
                     <div key={item.id || idx} className="flex items-center justify-between group">
                         <div className="flex items-center gap-3">
                             {item.icon && (
-                                <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-sm">
+                                <div className={cn(
+                                    "w-8 h-8 rounded-full flex items-center justify-center text-sm",
+                                    isDark ? "bg-zinc-800" : "bg-zinc-200"
+                                )}>
                                     {item.icon}
                                 </div>
                             )}
-                            <span className="text-zinc-700 dark:text-zinc-300 font-medium">{item.label}</span>
+                            <span className={cn(
+                                "font-medium",
+                                isDark ? "text-zinc-200" : "text-zinc-700"
+                            )}>{item.label}</span>
                         </div>
                         {item.value && (
                             <span className={cn(
                                 "text-sm font-semibold",
-                                item.status === "success" ? "text-green-600" :
-                                    item.status === "warning" ? "text-yellow-600" :
-                                        item.status === "error" ? "text-red-600" : "text-zinc-500"
+                                item.status === "success" ? (isDark ? "text-green-400" : "text-green-600") :
+                                    item.status === "warning" ? (isDark ? "text-yellow-400" : "text-yellow-600") :
+                                        item.status === "error" ? (isDark ? "text-red-400" : "text-red-600") :
+                                            (isDark ? "text-zinc-400" : "text-zinc-500")
                             )}>
                                 {item.value}
                             </span>

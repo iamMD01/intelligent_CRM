@@ -4,7 +4,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTambo, useTamboThread, useTamboThreadList, useTamboClient } from "@tambo-ai/react";
-import { Maximize2, Minimize2, Plus, History, X } from "lucide-react";
+import { Maximize2, Minimize2, Plus, History, X, Sun, Moon } from "lucide-react";
 import {
     MessageInput,
     MessageInputTextarea,
@@ -13,6 +13,7 @@ import {
 import { ScrollableMessageContainer } from "@/components/tambo/scrollable-message-container";
 import { ThreadContent, ThreadContentMessages } from "@/components/tambo/thread-content";
 import { useCRMStore } from "@/lib/crm-store";
+import { useThemeStore } from "@/lib/theme-store";
 import { PromptInput, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { useTamboThreadInput } from "@tambo-ai/react";
 
@@ -75,6 +76,9 @@ const MorphingChatInner = ({
 
     // Get Tambo client for delete operations
     const client = useTamboClient();
+
+    // Get theme for styling
+    const { theme, toggleTheme } = useThemeStore();
 
     // Get selected widget ID from store
     const { selectedWidgetId, selectWidgetForChat } = useCRMStore();
@@ -191,22 +195,34 @@ const MorphingChatInner = ({
                             <motion.button
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="w-12 h-12 rounded-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 flex items-center justify-center transition-colors text-zinc-900 font-bold text-xs tracking-tighter"
+                                className={cn(
+                                    "w-12 h-12 rounded-full flex items-center justify-center transition-colors border",
+                                    theme === 'dark'
+                                        ? "bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-yellow-400"
+                                        : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-900"
+                                )}
                                 onClick={() => setViewState("history")}
                             >
                                 CCO
                             </motion.button>
 
+                            {/* Theme Toggle Button */}
                             <motion.button
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="w-12 h-12 rounded-full bg-white border-2 border-zinc-200 overflow-hidden flex items-center justify-center p-0.5"
+                                onClick={toggleTheme}
+                                className={cn(
+                                    "w-12 h-12 rounded-full flex items-center justify-center transition-colors border-2",
+                                    theme === 'dark'
+                                        ? "bg-zinc-800 border-zinc-600 hover:bg-zinc-700"
+                                        : "bg-white border-zinc-200 hover:bg-zinc-50"
+                                )}
                             >
-                                <img
-                                    src="https://avatar.vercel.sh/user"
-                                    alt="User"
-                                    className="w-full h-full rounded-full object-cover"
-                                />
+                                {theme === 'dark' ? (
+                                    <Sun size={20} className="text-yellow-400" />
+                                ) : (
+                                    <Moon size={20} className="text-zinc-600" />
+                                )}
                             </motion.button>
                         </motion.div>
                     </motion.div>
@@ -310,9 +326,22 @@ const MorphingChatInner = ({
                                     <span className="font-medium text-zinc-300">New and Previous CRM's</span>
                                 </div>
 
-                                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-zinc-100 shrink-0">
-                                    <img src="https://avatar.vercel.sh/user" alt="User" className="w-full h-full object-cover" />
-                                </div>
+                                {/* Theme Toggle Button */}
+                                <button
+                                    onClick={toggleTheme}
+                                    className={cn(
+                                        "w-14 h-14 rounded-full flex items-center justify-center transition-colors border-2 shrink-0",
+                                        theme === 'dark'
+                                            ? "bg-zinc-800 border-zinc-600 hover:bg-zinc-700"
+                                            : "bg-white border-zinc-100 hover:bg-zinc-50"
+                                    )}
+                                >
+                                    {theme === 'dark' ? (
+                                        <Sun size={22} className="text-yellow-400" />
+                                    ) : (
+                                        <Moon size={22} className="text-zinc-600" />
+                                    )}
+                                </button>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -438,13 +467,21 @@ const MorphingChatInner = ({
                                         CCO
                                     </button>
 
-                                    {/* Profile Button */}
-                                    <button className="w-14 h-14 rounded-full bg-white border-2 border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 shrink-0">
-                                        <img
-                                            src="https://avatar.vercel.sh/user"
-                                            alt="User"
-                                            className="w-full h-full rounded-full object-cover"
-                                        />
+                                    {/* Theme Toggle Button */}
+                                    <button
+                                        onClick={toggleTheme}
+                                        className={cn(
+                                            "w-14 h-14 rounded-full flex items-center justify-center transition-colors border-2 shrink-0",
+                                            theme === 'dark'
+                                                ? "bg-zinc-800 border-zinc-600 hover:bg-zinc-700"
+                                                : "bg-white border-zinc-200 hover:bg-zinc-50"
+                                        )}
+                                    >
+                                        {theme === 'dark' ? (
+                                            <Sun size={22} className="text-yellow-400" />
+                                        ) : (
+                                            <Moon size={22} className="text-zinc-600" />
+                                        )}
                                     </button>
                                 </div>
                                 <div className="flex justify-between items-center mt-3 px-4 text-xs text-zinc-600 font-medium">

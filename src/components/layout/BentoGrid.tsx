@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
 import { useCRMStore } from "@/lib/crm-store";
+import { useThemeStore } from "@/lib/theme-store";
 import { useTambo } from "@tambo-ai/react";
 import { cn } from "@/lib/utils";
 import { Trash2, MessageSquarePlus, Sparkles, GripVertical } from "lucide-react";
@@ -26,7 +27,7 @@ interface CanvasWidgetData {
 // Jelly spring config
 const jellySpring = { stiffness: 400, damping: 25, mass: 0.8 };
 
-// Widget renderer - no background, direct content
+// Widget renderer - Apple Keynote style
 const WidgetRenderer = ({
     widget,
     layout,
@@ -42,6 +43,7 @@ const WidgetRenderer = ({
     isSelected: boolean;
     onRemove: () => void;
 }) => {
+    const { theme } = useThemeStore();
     const widgetRef = useRef<HTMLDivElement>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -75,9 +77,8 @@ const WidgetRenderer = ({
             const dx = e.clientX - startPos.current.x;
             const dy = e.clientY - startPos.current.y;
 
-            // Direct DOM manipulation for smooth dragging
             if (widgetRef.current) {
-                widgetRef.current.style.transform = `translate(${startLayout.current.x + dx}px, ${startLayout.current.y + dy}px) scaleX(${scaleX.get()}) scaleY(${scaleY.get()})`;
+                widgetRef.current.style.transform = `translate(${startLayout.current.x + dx}px, ${startLayout.current.y + dy}px)`;
             }
         } else if (isResizing.current && resizeDir.current) {
             const dx = e.clientX - startPos.current.x;
@@ -107,7 +108,7 @@ const WidgetRenderer = ({
                 widgetRef.current.style.height = `${newHeight}px`;
             }
         }
-    }, [scaleX, scaleY]);
+    }, []);
 
     const handleMouseUp = useCallback((e: MouseEvent) => {
         if (isDragging.current) {
@@ -183,7 +184,8 @@ const WidgetRenderer = ({
             data-resize
             onMouseDown={(e) => handleResizeStart(e, dir)}
             className={cn(
-                "absolute w-3 h-3 rounded-full bg-zinc-300 hover:bg-emerald-500 transition-colors opacity-0 group-hover:opacity-100 z-20 cursor-pointer",
+                "absolute w-3 h-3 rounded-full transition-colors opacity-0 group-hover:opacity-100 z-20 cursor-pointer",
+                theme === 'dark' ? "bg-zinc-600 hover:bg-emerald-400" : "bg-zinc-400 hover:bg-emerald-500",
                 className
             )}
             style={{
@@ -207,8 +209,6 @@ const WidgetRenderer = ({
                 transform: `translate(${layout.x}px, ${layout.y}px)`,
                 width: layout.width,
                 height: layout.height,
-                scaleX: scaleX.get(),
-                scaleY: scaleY.get(),
             }}
         >
             {/* Selection ring */}
@@ -223,7 +223,12 @@ const WidgetRenderer = ({
             )}>
                 <button
                     onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                    className="p-1.5 bg-white rounded-full shadow-lg border border-zinc-200 hover:bg-red-50 hover:border-red-200 transition-colors"
+                    className={cn(
+                        "p-1.5 rounded-full shadow-lg border transition-colors",
+                        theme === 'dark'
+                            ? "bg-zinc-800 border-zinc-700 hover:bg-red-900/50 hover:border-red-700"
+                            : "bg-white border-zinc-200 hover:bg-red-50 hover:border-red-200"
+                    )}
                 >
                     <Trash2 size={12} className="text-red-500" />
                 </button>
@@ -231,14 +236,20 @@ const WidgetRenderer = ({
 
             {/* Drag handle indicator */}
             <div className={cn(
-                "absolute -top-2 -left-2 p-1 bg-white rounded-full shadow-lg border border-zinc-200 transition-opacity z-30",
-                isHovered ? "opacity-100" : "opacity-0"
+                "absolute -top-2 -left-2 p-1 rounded-full shadow-lg border transition-opacity z-30",
+                isHovered ? "opacity-100" : "opacity-0",
+                theme === 'dark' ? "bg-zinc-800 border-zinc-700" : "bg-white border-zinc-200"
             )}>
-                <GripVertical size={10} className="text-zinc-400" />
+                <GripVertical size={10} className={theme === 'dark' ? "text-zinc-400" : "text-zinc-500"} />
             </div>
 
-            {/* Direct widget content - NO background! */}
-            <div className="w-full h-full overflow-hidden">
+            {/* Widget card with Apple Keynote style - rounded corners, theme colors */}
+            <div
+                className={cn(
+                    "w-full h-full rounded-2xl overflow-hidden p-4",
+                    theme === 'dark' ? "bg-black" : "bg-[#ECECEC]"
+                )}
+            >
                 {widget.renderedComponent}
             </div>
 
@@ -255,6 +266,7 @@ const WidgetRenderer = ({
 const ContextMenu = ({ x, y, widget, onClose, onAddToChat }: {
     x: number; y: number; widget: CanvasWidgetData; onClose: () => void; onAddToChat: () => void;
 }) => {
+    const { theme } = useThemeStore();
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -277,22 +289,31 @@ const ContextMenu = ({ x, y, widget, onClose, onAddToChat }: {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             style={{ left: x, top: y }}
-            className="fixed z-[9999] bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-zinc-200/50 py-1.5 min-w-[160px]"
+            className={cn(
+                "fixed z-[9999] backdrop-blur-xl rounded-xl shadow-2xl py-1.5 min-w-[160px]",
+                theme === 'dark'
+                    ? "bg-zinc-900/95 border border-zinc-700/50"
+                    : "bg-white/95 border border-zinc-200/50"
+            )}
         >
             <button
                 onClick={() => { onAddToChat(); onClose(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-emerald-50 text-sm"
+                className={cn(
+                    "w-full flex items-center gap-2 px-3 py-2 text-left text-sm",
+                    theme === 'dark' ? "hover:bg-emerald-900/30" : "hover:bg-emerald-50"
+                )}
             >
-                <MessageSquarePlus size={14} className="text-emerald-600" />
-                <span className="font-medium">Add to Chat</span>
+                <MessageSquarePlus size={14} className="text-emerald-500" />
+                <span className={cn("font-medium", theme === 'dark' ? "text-zinc-100" : "text-zinc-900")}>Add to Chat</span>
             </button>
         </motion.div>
     );
 };
 
-// Main Canvas
+// Main Canvas - Apple Keynote style
 export const BentoGrid = () => {
     const { thread } = useTambo();
+    const { theme } = useThemeStore();
     const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat } = useCRMStore();
 
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -302,7 +323,6 @@ export const BentoGrid = () => {
     const [isAnimatingCenter, setIsAnimatingCenter] = useState(false);
     const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(new Set());
     const [widgetLayouts, setWidgetLayouts] = useState<Record<string, WidgetLayout>>({});
-    const [, forceUpdate] = useState({});
 
     // Extract widgets from thread
     const widgets: CanvasWidgetData[] = React.useMemo(() => {
@@ -312,13 +332,24 @@ export const BentoGrid = () => {
             .map(msg => ({ id: msg.id, messageId: msg.id, renderedComponent: msg.renderedComponent, title: `Widget ${msg.id.substring(0, 6)}` }));
     }, [thread?.messages, hiddenMessageIds]);
 
-    // Init layouts
+    // Init layouts with 10px gap
     useEffect(() => {
         let hasNew = false;
         const newLayouts = { ...widgetLayouts };
+        const gap = 10;
+        const widgetWidth = 340;
+        const widgetHeight = 260;
+
         widgets.forEach((w, i) => {
             if (!newLayouts[w.id]) {
-                newLayouts[w.id] = { x: 60 + (i % 3) * 360, y: 60 + Math.floor(i / 3) * 300, width: 340, height: 260 };
+                const col = i % 3;
+                const row = Math.floor(i / 3);
+                newLayouts[w.id] = {
+                    x: gap + col * (widgetWidth + gap),
+                    y: gap + row * (widgetHeight + gap),
+                    width: widgetWidth,
+                    height: widgetHeight
+                };
                 hasNew = true;
             }
         });
@@ -373,15 +404,29 @@ export const BentoGrid = () => {
         document.body.style.cursor = 'grabbing';
     };
 
+    // Empty state
     if (widgets.length === 0) {
         return (
-            <div data-canvas-space="true" className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh]">
+            <div
+                data-canvas-space="true"
+                className={cn(
+                    "flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh]",
+                    theme === 'dark' ? "bg-[#1A1A1A]" : "bg-white"
+                )}
+            >
                 <div className="max-w-md space-y-4">
-                    <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center mb-6 shadow-lg">
+                    <div className={cn(
+                        "w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 shadow-lg",
+                        theme === 'dark' ? "bg-zinc-800" : "bg-gradient-to-br from-emerald-50 to-teal-100"
+                    )}>
                         <Sparkles size={32} className="text-emerald-500" />
                     </div>
-                    <div className="text-xl font-semibold text-zinc-500">Your canvas is empty</div>
-                    <p className="text-sm text-zinc-400">Ask the AI to create a chart, list, or stat card.</p>
+                    <div className={cn("text-xl font-semibold", theme === 'dark' ? "text-zinc-400" : "text-zinc-500")}>
+                        Your canvas is empty
+                    </div>
+                    <p className={cn("text-sm", theme === 'dark' ? "text-zinc-600" : "text-zinc-400")}>
+                        Ask the AI to create a chart, list, or stat card.
+                    </p>
                 </div>
             </div>
         );
@@ -389,9 +434,13 @@ export const BentoGrid = () => {
 
     return (
         <>
+            {/* Canvas with Apple Keynote style background */}
             <div
                 data-canvas-space="true"
-                className="relative min-h-screen overflow-hidden pb-32 cursor-grab active:cursor-grabbing"
+                className={cn(
+                    "relative min-h-screen overflow-hidden pb-32 cursor-grab active:cursor-grabbing",
+                    theme === 'dark' ? "bg-[#1A1A1A]" : "bg-white"
+                )}
                 onMouseDown={handlePanStart}
             >
                 <div
@@ -408,7 +457,7 @@ export const BentoGrid = () => {
                             <WidgetRenderer
                                 key={widget.id}
                                 widget={widget}
-                                layout={widgetLayouts[widget.id] || { x: 100, y: 100, width: 340, height: 260 }}
+                                layout={widgetLayouts[widget.id] || { x: 10, y: 10, width: 340, height: 260 }}
                                 onLayoutChange={(l) => setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }))}
                                 isSelected={selectedWidgetId === widget.id}
                                 onContextMenu={(e, w) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, widget: w }); }}
@@ -420,7 +469,15 @@ export const BentoGrid = () => {
 
                 <AnimatePresence>
                     {isAnimatingCenter && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 bg-zinc-900 text-white rounded-full text-sm shadow-lg pointer-events-none z-50">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className={cn(
+                                "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 rounded-full text-sm shadow-lg pointer-events-none z-50",
+                                theme === 'dark' ? "bg-white text-black" : "bg-zinc-900 text-white"
+                            )}
+                        >
                             Centered
                         </motion.div>
                     )}

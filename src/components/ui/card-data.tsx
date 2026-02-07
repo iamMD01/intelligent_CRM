@@ -5,6 +5,7 @@ import { useTamboComponentState } from "@tambo-ai/react";
 import * as React from "react";
 import { z } from "zod";
 import { Check } from "lucide-react";
+import { useThemeStore } from "@/lib/theme-store";
 
 // Define option type for individual options in the multi-select
 export type DataCardItem = {
@@ -54,6 +55,9 @@ export type DataCardProps = z.infer<typeof dataCardSchema> &
  */
 export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
   ({ title, options, className, ...props }, ref) => {
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+
     // Initialize Tambo component state
     const [state, setState] = useTamboComponentState<DataCardState>(
       `data-card`,
@@ -87,23 +91,29 @@ export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
     };
 
     return (
-      <div ref={ref} className={cn("w-full", className)} {...props}>
+      <div ref={ref} className={cn("w-full p-4", className)} {...props}>
         {title && (
-          <h2 className="text-lg font-medium text-gray-700 mb-3">{title}</h2>
+          <h2 className={cn(
+            "text-lg font-medium mb-3",
+            isDark ? "text-zinc-200" : "text-gray-700"
+          )}>{title}</h2>
         )}
 
         <div className="space-y-2">
           {options?.map((card, index) => (
             <div
               key={`${card.id || "card"}-${index}`}
-              className="border-b border-gray-100 pb-2 last:border-0"
+              className={cn(
+                "border-b pb-2 last:border-0",
+                isDark ? "border-zinc-700" : "border-gray-100"
+              )}
             >
               <div
                 className={cn(
                   "group flex items-start p-1.5 rounded-md transition-colors",
                   state &&
-                    state.selectedValues.includes(card.value) &&
-                    "bg-gray-50",
+                  state.selectedValues.includes(card.value) &&
+                  (isDark ? "bg-zinc-800" : "bg-gray-50"),
                 )}
               >
                 <div
@@ -115,7 +125,9 @@ export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
                       "w-4 h-4 border rounded-sm flex items-center justify-center transition-colors",
                       state && state.selectedValues.includes(card.value)
                         ? "bg-blue-500 border-blue-500 text-white"
-                        : "border-gray-200 hover:border-gray-300",
+                        : isDark
+                          ? "border-zinc-600 hover:border-zinc-500"
+                          : "border-gray-200 hover:border-gray-300",
                     )}
                   >
                     {state && state.selectedValues.includes(card.value) && (
@@ -133,22 +145,28 @@ export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
                 >
                   <h3
                     className={cn(
-                      "text-blue-600 font-medium text-sm",
-                      "group-hover:text-blue-700",
+                      "font-medium text-sm",
+                      isDark ? "text-blue-400 group-hover:text-blue-300" : "text-blue-600 group-hover:text-blue-700",
                       state &&
-                        state.selectedValues.includes(card.value) &&
-                        "text-blue-700",
+                      state.selectedValues.includes(card.value) &&
+                      (isDark ? "text-blue-300" : "text-blue-700"),
                     )}
                   >
                     {card.label}
                   </h3>
                   {card.description && (
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                    <p className={cn(
+                      "text-xs mt-0.5 leading-relaxed",
+                      isDark ? "text-zinc-400" : "text-gray-500"
+                    )}>
                       {card.description}
                     </p>
                   )}
                   {card.url && (
-                    <span className="text-xs text-green-600 mt-1 block truncate opacity-80">
+                    <span className={cn(
+                      "text-xs mt-1 block truncate opacity-80",
+                      isDark ? "text-green-400" : "text-green-600"
+                    )}>
                       {card.url}
                     </span>
                   )}
