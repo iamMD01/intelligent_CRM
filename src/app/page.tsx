@@ -8,7 +8,7 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-20">
 
         {/* HERO SECTION */}
-        <section className="relative w-full overflow-hidden">
+        <section className="relative w-full max-w-6xl mx-auto rounded-[40px] overflow-hidden">
 
           {/* BACKGROUND BAND */}
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 
