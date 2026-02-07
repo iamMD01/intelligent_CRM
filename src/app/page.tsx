@@ -48,7 +48,7 @@ export default function LandingPage() {
             bg-black
             text-white
             rounded-full
-            font-medium
+            font-bold
             text-base
             transition
             hover:scale-105
