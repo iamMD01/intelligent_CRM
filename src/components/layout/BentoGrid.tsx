@@ -323,6 +323,12 @@ export const BentoGrid = () => {
     const [isAnimatingCenter, setIsAnimatingCenter] = useState(false);
     const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(new Set());
     const [widgetLayouts, setWidgetLayouts] = useState<Record<string, WidgetLayout>>({});
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Prevent hydration mismatch
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Extract widgets from thread
     const widgets: CanvasWidgetData[] = React.useMemo(() => {
@@ -404,13 +410,23 @@ export const BentoGrid = () => {
         document.body.style.cursor = 'grabbing';
     };
 
+    // Show loading state during SSR to prevent hydration mismatch
+    if (!isMounted) {
+        return (
+            <div
+                data-canvas-space="true"
+                className="min-h-screen bg-white dark:bg-[#1A1A1A]"
+            />
+        );
+    }
+
     // Empty state
     if (widgets.length === 0) {
         return (
             <div
                 data-canvas-space="true"
                 className={cn(
-                    "flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh]",
+                    "min-h-screen flex flex-col items-center justify-center p-8 text-center",
                     theme === 'dark' ? "bg-[#1A1A1A]" : "bg-white"
                 )}
             >
