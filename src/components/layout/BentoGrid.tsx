@@ -36,7 +36,8 @@ const WidgetRenderer = ({
     onContextMenu,
     isSelected,
     onRemove,
-    onMeasure
+    onMeasure,
+    isNewlyCreated = false
 }: {
     widget: CanvasWidgetData;
     layout: WidgetLayout;
@@ -45,6 +46,7 @@ const WidgetRenderer = ({
     isSelected: boolean;
     onRemove: () => void;
     onMeasure?: (id: string, width: number, height: number) => void;
+    isNewlyCreated?: boolean;
 }) => {
     const { theme } = useThemeStore();
     const widgetRef = useRef<HTMLDivElement>(null);
@@ -219,6 +221,16 @@ const WidgetRenderer = ({
                 <div className="absolute -inset-1 rounded-2xl ring-2 ring-emerald-500 ring-offset-2 pointer-events-none" />
             )}
 
+            {/* Newly created animation - green pulsing border for 3 seconds */}
+            {isNewlyCreated && !isSelected && (
+                <motion.div
+                    initial={{ opacity: 1, scale: 1 }}
+                    animate={{ opacity: [1, 0.5, 1], scale: [1, 1.02, 1] }}
+                    transition={{ duration: 0.8, repeat: 3, ease: "easeInOut" }}
+                    className="absolute -inset-1 rounded-2xl ring-2 ring-emerald-400 ring-offset-2 pointer-events-none"
+                />
+            )}
+
             {/* Floating action buttons */}
             <div className={cn(
                 "absolute -top-2 -right-2 flex gap-1 transition-opacity z-30",
@@ -327,6 +339,7 @@ export const BentoGrid = () => {
     const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(new Set());
     const [widgetLayouts, setWidgetLayouts] = useState<Record<string, WidgetLayout>>({});
     const [isMounted, setIsMounted] = useState(false);
+    const [newlyCreatedWidgetIds, setNewlyCreatedWidgetIds] = useState<Set<string>>(new Set());
 
     // Prevent hydration mismatch
     useEffect(() => {
@@ -344,8 +357,9 @@ export const BentoGrid = () => {
     // Init layouts with smart sizing based on content type
     useEffect(() => {
         let hasNew = false;
+        const newWidgetIds: string[] = [];
         const newLayouts = { ...widgetLayouts };
-        const gap = 10;
+        const gap = 20;
 
         // Size categories based on content complexity
         const getWidgetSize = (widget: CanvasWidgetData, index: number): { width: number; height: number } => {
@@ -363,11 +377,34 @@ export const BentoGrid = () => {
             }
         };
 
-        // Simple bin-packing: place widgets row by row, tracking max height per row
-        let currentX = gap;
-        let currentY = gap;
-        let rowMaxHeight = 0;
+        // Calculate starting position from existing widgets' bounds
+        let maxY = gap;
+        let lastRowY = gap;
+        let lastRowMaxHeight = 0;
+        let lastRowX = gap;
         const canvasWidth = 1100;
+
+        // Find the bottom-most position and the last row's state from existing layouts
+        Object.values(newLayouts).forEach(layout => {
+            const bottomY = layout.y + layout.height;
+            if (layout.y === lastRowY || layout.y > lastRowY) {
+                // Same row or new row
+                if (layout.y > lastRowY) {
+                    lastRowY = layout.y;
+                    lastRowX = layout.x + layout.width + gap;
+                    lastRowMaxHeight = layout.height;
+                } else {
+                    lastRowX = Math.max(lastRowX, layout.x + layout.width + gap);
+                    lastRowMaxHeight = Math.max(lastRowMaxHeight, layout.height);
+                }
+            }
+            maxY = Math.max(maxY, bottomY + gap);
+        });
+
+        // Position tracking for new widgets
+        let currentX = lastRowX;
+        let currentY = Object.keys(newLayouts).length > 0 ? lastRowY : gap;
+        let rowMaxHeight = Object.keys(newLayouts).length > 0 ? lastRowMaxHeight : 0;
 
         // Check if we're replacing a widget
         const replacingId = widgetBeingReplaced;
@@ -386,6 +423,7 @@ export const BentoGrid = () => {
                     // Clear the replacement state
                     setWidgetBeingReplaced(null);
                     hasNew = true;
+                    newWidgetIds.push(w.id);
                     return;
                 }
 
@@ -408,6 +446,7 @@ export const BentoGrid = () => {
                 currentX += size.width + gap;
                 rowMaxHeight = Math.max(rowMaxHeight, size.height);
                 hasNew = true;
+                newWidgetIds.push(w.id);
             }
         });
         if (hasNew) {
@@ -418,6 +457,18 @@ export const BentoGrid = () => {
                 sounds.create();
             }
             setWidgetLayouts(newLayouts);
+
+            // Track newly created widgets for green animation
+            setNewlyCreatedWidgetIds(prev => new Set([...prev, ...newWidgetIds]));
+
+            // Remove from newly created after 3 seconds
+            setTimeout(() => {
+                setNewlyCreatedWidgetIds(prev => {
+                    const next = new Set(prev);
+                    newWidgetIds.forEach(id => next.delete(id));
+                    return next;
+                });
+            }, 3000);
         }
     }, [widgets, widgetBeingReplaced]);
 
@@ -561,6 +612,7 @@ export const BentoGrid = () => {
                                 layout={widgetLayouts[widget.id] || { x: 10, y: 10, width: 340, height: 260 }}
                                 onLayoutChange={(l) => setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }))}
                                 isSelected={selectedWidgetId === widget.id}
+                                isNewlyCreated={newlyCreatedWidgetIds.has(widget.id)}
                                 onContextMenu={(e, w) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, widget: w }); }}
                                 onRemove={() => { sounds.delete(); setHiddenMessageIds(prev => new Set([...prev, widget.messageId])); if (selectedWidgetId === widget.messageId) selectWidgetForChat(null); }}
                             />
