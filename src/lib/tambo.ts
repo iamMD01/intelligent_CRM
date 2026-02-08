@@ -35,7 +35,7 @@ export const tools: TamboTool[] = [
   },
   {
     name: "fetchCRMData",
-    description: "Fetch real CRM data (Deals, Pipeline, Revenue, Team) from the database. always use this before generating a widget to get the data.",
+    description: "Simulate an MCP tool to fetch real CRM data (Deals, Pipeline, Revenue, Team). Always use this to get the latest source of truth.",
     inputSchema: z.object({
       query: z.string().describe("What data to fetch? (leads, deals, revenue, team, pipeline)"),
     }),

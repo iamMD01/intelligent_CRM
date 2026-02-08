@@ -59,9 +59,9 @@ export function DataConnector() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Connect Data (Holocron)</DialogTitle>
+                    <DialogTitle>MCP Data Integration</DialogTitle>
                     <DialogDescription>
-                        Paste your CRM data here as JSON. The AI will use this data to generate insights and widgets.
+                        Simulate an MCP server connection by pasting your CRM data below. The AI will use this as a source of truth.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
