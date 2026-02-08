@@ -74,7 +74,7 @@ export const tools: TamboTool[] = [
   },
   {
     name: "updateWidgetData",
-    description: "Update an existing widget's data or appearance without recreating it. Use this for real-time adjustments (e.g., changing a single value, color, or label).",
+    description: "IMPORTANT: Use this to update a widget in real-time if the user asks for a modification (e.g. 'Change color to green', 'Update value to 50k'). ALWAYS prefer this over creating a new widget if the goal is to modify an existing one.",
     inputSchema: z.object({
       widgetId: z.string().optional().describe("The ID of the widget (preferred)"),
       widgetName: z.string().optional().describe("The fuzzy name/title of the widget if ID is unknown"),

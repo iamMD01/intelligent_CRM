@@ -24,7 +24,7 @@ export const crmStatCardSchema = z.object({
 
 export type CRMStatCardProps = z.infer<typeof crmStatCardSchema>;
 
-export const CRMStatCard = ({ title, value, trend, trendDirection = "neutral", subtext, className }: CRMStatCardProps) => {
+export const CRMStatCard = React.memo(({ title, value, trend, trendDirection = "neutral", subtext, className }: CRMStatCardProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
     const { messageId } = useWidgetContext();
@@ -68,7 +68,7 @@ export const CRMStatCard = ({ title, value, trend, trendDirection = "neutral", s
             </div>
         </div>
     );
-};
+});
 
 // --- CRM Chart ---
 
@@ -78,7 +78,7 @@ export const crmChartSchema = graphSchema.extend({
 
 export type CRMChartProps = z.infer<typeof crmChartSchema>;
 
-export const CRMChart = (props: CRMChartProps) => {
+export const CRMChart = React.memo((props: CRMChartProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
     const { messageId } = useWidgetContext();
@@ -110,7 +110,7 @@ export const CRMChart = (props: CRMChartProps) => {
             </div>
         </div>
     );
-};
+});
 
 // --- CRM List ---
 
@@ -130,7 +130,7 @@ export const crmListSchema = z.object({
 
 export type CRMListProps = z.infer<typeof crmListSchema>;
 
-export const CRMList = ({ title, items = [], className }: CRMListProps) => {
+export const CRMList = React.memo(({ title, items = [], className }: CRMListProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
     const { messageId } = useWidgetContext();
@@ -185,7 +185,7 @@ export const CRMList = ({ title, items = [], className }: CRMListProps) => {
             </div>
         </div>
     );
-};
+});
 // --- CRM Heatmap ---
 
 export const crmHeatmapSchema = z.object({
@@ -203,7 +203,7 @@ export const crmHeatmapSchema = z.object({
 
 export type CRMHeatmapProps = z.infer<typeof crmHeatmapSchema>;
 
-export const CRMHeatmap = (props: CRMHeatmapProps) => {
+export const CRMHeatmap = React.memo((props: CRMHeatmapProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
     const { messageId } = useWidgetContext();
@@ -324,4 +324,4 @@ export const CRMHeatmap = (props: CRMHeatmapProps) => {
             </div>
         </div>
     );
-};
+});

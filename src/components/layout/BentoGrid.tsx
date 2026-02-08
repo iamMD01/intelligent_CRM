@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
 import { DataConnector } from "@/components/tambo/DataConnector";
+import { CRMStatCard, CRMChart, CRMList, CRMHeatmap } from "@/components/tambo/crm-components";
 import { useCRMStore } from "@/lib/crm-store";
 import { useThemeStore } from "@/lib/theme-store";
 import { useTambo } from "@tambo-ai/react";
@@ -25,6 +26,8 @@ interface CanvasWidgetData {
     messageId: string;
     renderedComponent: React.ReactNode;
     title: string;
+    componentName?: string;
+    props?: Record<string, any>;
 }
 
 // Jelly spring config
@@ -38,6 +41,27 @@ const WIDGET_CORNER_RADIUS = "32px";
 const StoreTitleWatcher = ({ id }: { id: string }) => {
     const storeWidget = useCRMStore(state => state.widgets.find(w => w.id === id));
     return <span className="text-blue-500">Store: {storeWidget?.title || 'Not Found'}</span>;
+};
+
+// Helper to render widget content reactively
+const renderWidgetContent = (widget: CanvasWidgetData) => {
+    if (widget.componentName && widget.props) {
+        switch (widget.componentName) {
+            case 'CRMStatCard': return <CRMStatCard {...(widget.props as any)} />;
+            case 'CRMChart': return <CRMChart {...(widget.props as any)} />;
+            case 'CRMList': return <CRMList {...(widget.props as any)} />;
+            case 'CRMHeatmap': return <CRMHeatmap {...(widget.props as any)} />;
+        }
+    }
+
+    // Fallback to static rendered component
+    return React.isValidElement(widget.renderedComponent)
+        ? (
+            <WidgetContext.Provider value={{ messageId: widget.messageId }}>
+                {widget.renderedComponent}
+            </WidgetContext.Provider>
+        )
+        : widget.renderedComponent;
 };
 
 // Widget renderer - Apple Keynote style
@@ -302,7 +326,7 @@ const WidgetRenderer = ({
                 <GripVertical size={10} className={theme === 'dark' ? "text-zinc-400" : "text-zinc-500"} />
             </div>
 
-            {/* Widget card with Apple Keynote style - rounded corners, theme colors */}
+            {/* Widget card content rendered reactively */}
             <div
                 ref={contentRef}
                 style={{ borderRadius: WIDGET_CORNER_RADIUS }}
@@ -311,13 +335,7 @@ const WidgetRenderer = ({
                     theme === 'dark' ? "bg-black" : "bg-white"
                 )}
             >
-                {React.isValidElement(widget.renderedComponent)
-                    ? (
-                        <WidgetContext.Provider value={{ messageId: widget.messageId }}>
-                            {widget.renderedComponent}
-                        </WidgetContext.Provider>
-                    )
-                    : widget.renderedComponent}
+                {renderWidgetContent(widget)}
             </div>
 
             {/* Corner resize handles */}
@@ -384,6 +402,7 @@ export const BentoGrid = () => {
     // OPTIMIZATION: Do NOT destructure zoomLevel/canvasOffset here to prevent re-renders on scroll
     // We will use subscribe to update DOM manually
     const { selectedWidgetId, selectWidgetForChat, widgetBeingReplaced, setWidgetBeingReplaced, isFocusing } = useCRMStore();
+    const storeWidgets = useCRMStore(state => state.widgets);
 
     const canvasRef = useRef<HTMLDivElement>(null);
     const isPanning = useRef(false);
@@ -549,14 +568,19 @@ export const BentoGrid = () => {
                     } catch (e) { }
                 }
 
+                // Pull latest data from store for reactivity
+                const storeWidget = storeWidgets.find(sw => sw.id === msg.id);
+
                 return {
                     id: msg.id,
                     messageId: msg.id,
                     renderedComponent: msg.renderedComponent,
-                    title: title
+                    title: storeWidget?.title || title,
+                    componentName: storeWidget?.componentName,
+                    props: storeWidget?.props,
                 };
             });
-    }, [thread?.messages, hiddenMessageIds]);
+    }, [thread?.messages, hiddenMessageIds, storeWidgets]);
 
     // Sync visible widgets to store for "The Force" tools
     useEffect(() => {

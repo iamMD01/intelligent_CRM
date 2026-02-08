@@ -115,46 +115,88 @@ export const useCRMStore = create<CanvasState>()(
 
             syncWidgets: (incomingWidgets) => set((state) => {
                 const existingMap = new Map(state.widgets.map(w => [w.id, w]));
+                let hasChanges = false;
 
                 const mergedWidgets = incomingWidgets.map(newW => {
                     const existing = existingMap.get(newW.id);
                     if (existing) {
-                        // Preserve title and componentName if they are "better" (not default/unknown)
-                        // If current title is "Widget ...", overwrite it? 
-                        // Actually, if existing has a specific title (not starting with "Widget "), keep it.
-                        // Or simply: merge props, but let incoming (position) win?
-                        // Let's keep existing title if it doesn't look like a generated ID title, OR if incoming is just fallback.
-                        // Safe bet: prefer existing known title over incoming fallback.
-
                         const hasRealTitle = existing.title && !existing.title.startsWith("Widget ");
                         const incomingIsFallback = newW.title.startsWith("Widget ");
                         const preservedTitle = (hasRealTitle && incomingIsFallback) ? existing.title : newW.title;
 
-                        // DEBUG LOG
-                        if (hasRealTitle && incomingIsFallback) {
-                            console.log(`[Store] Preserving title for ${newW.id}: "${existing.title}" vs incoming "${newW.title}"`);
-                        }
+                        // Check if this specific widget actually changed
+                        const newProps = Object.keys(newW.props).length > 0 ? newW.props : existing.props;
+                        const newComponentName = newW.componentName === 'Unknown' ? existing.componentName : newW.componentName;
+
+                        const changed =
+                            preservedTitle !== existing.title ||
+                            newComponentName !== existing.componentName ||
+                            newProps !== existing.props || // Reference check usually enough here for props
+                            newW.position.x !== existing.position.x ||
+                            newW.position.y !== existing.position.y ||
+                            newW.size.width !== existing.size.width ||
+                            newW.size.height !== existing.size.height;
+
+                        if (changed) hasChanges = true;
 
                         return {
                             ...newW,
-                            // Verify if we should keep existing title
                             title: preservedTitle,
-                            // Keep props if incoming is empty
-                            props: Object.keys(newW.props).length > 0 ? newW.props : existing.props,
-                            componentName: newW.componentName === 'Unknown' ? existing.componentName : newW.componentName
+                            props: newProps,
+                            componentName: newComponentName
                         };
                     }
+                    hasChanges = true; // New widget added
                     return newW;
                 });
+
+                // Also check if any widgets were removed
+                if (!hasChanges && mergedWidgets.length !== state.widgets.length) {
+                    hasChanges = true;
+                }
+
+                if (!hasChanges) return state;
+
                 return { widgets: mergedWidgets };
             }),
 
             updateWidget: (id, updates) => set((state) => {
+                const widget = state.widgets.find(w => w.id === id);
+                if (!widget) return state;
+
+                // Check if anything actually changed to prevent infinite loops
+                let hasChanged = false;
+                for (const key in updates) {
+                    if (key === 'props' && updates.props) {
+                        // Shallow check for props
+                        const existingProps = widget.props || {};
+                        const newProps = updates.props;
+                        const keys = Object.keys(newProps);
+                        const existingKeys = Object.keys(existingProps);
+
+                        if (keys.length !== existingKeys.length) {
+                            hasChanged = true;
+                        } else {
+                            for (const pKey of keys) {
+                                if (newProps[pKey] !== existingProps[pKey]) {
+                                    hasChanged = true;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if ((updates as any)[key] !== (widget as any)[key]) {
+                        hasChanged = true;
+                    }
+                    if (hasChanged) break;
+                }
+
+                if (!hasChanged) return state;
+
                 return {
                     widgets: state.widgets.map((w) => {
                         if (w.id === id) {
                             const newWidget = { ...w, ...updates };
-                            // If updates contains props, merge them instead of replacing
+                            // If updates contains props, merge them
                             if (updates.props) {
                                 newWidget.props = { ...w.props, ...updates.props };
                             }
