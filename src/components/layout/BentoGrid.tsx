@@ -64,7 +64,16 @@ const renderWidgetContent = (widget: CanvasWidgetData) => {
         : widget.renderedComponent;
 };
 
-// Widget renderer - Apple Keynote style
+// Undo history stack
+const HISTORY_LIMIT = 20;
+interface HistoryAction {
+    type: 'move' | 'resize' | 'delete' | 'create';
+    widgetId: string;
+    payload: any;
+    timestamp: number;
+}
+
+// Widget renderer.
 const WidgetRenderer = ({
     widget,
     layout,
@@ -516,7 +525,7 @@ export const BentoGrid = () => {
             canvasRef.current.style.transform = `scale(${state.zoomLevel}) translate(${state.canvasOffset.x}px, ${state.canvasOffset.y}px)`;
         }
 
-        return unsub;
+        return () => unsub();
     }, []);
 
     // Extract widgets from thread
@@ -587,7 +596,7 @@ export const BentoGrid = () => {
         if (!widgets || widgets.length === 0) return;
 
         // Map CanvasWidgetData to CanvasWidget for store
-        const storeWidgets = widgets.map(w => {
+        const syncPayload = widgets.map(w => {
             const layout = widgetLayouts[w.id] || { x: 0, y: 0, width: 300, height: 200 };
             return {
                 id: w.id,
@@ -604,7 +613,7 @@ export const BentoGrid = () => {
         // Only sync if different to avoid loops? 
         // useCRMStore.getState().syncWidgets is a setter, so it triggers subscribers.
         // We should be careful. But standard usage is fine for now as widgets only change on message update.
-        useCRMStore.getState().syncWidgets(storeWidgets as any); // Type assertion needed due to strict store types
+        useCRMStore.getState().syncWidgets(syncPayload as any); // Type assertion needed due to strict store types
 
     }, [widgets, widgetLayouts]);
 

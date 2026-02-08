@@ -98,9 +98,14 @@ export const tools: TamboTool[] = [
     tool: async ({ widgetId, widgetName, updates }) => {
       const store = useCRMStore.getState();
       const widgets = store.widgets;
+      const selectedId = store.selectedWidgetId;
 
       let targetWidget = null;
       if (widgetId) targetWidget = widgets.find(w => w.id === widgetId);
+      // If no ID/Name provided, try selected widget
+      if (!targetWidget && !widgetName && selectedId) {
+        targetWidget = widgets.find(w => w.id === selectedId);
+      }
       if (!targetWidget && widgetName) {
         const lower = widgetName.toLowerCase();
         targetWidget = widgets.find(w => w.title.toLowerCase().includes(lower));
@@ -192,6 +197,36 @@ export const tools: TamboTool[] = [
       }, 1700); // 1.6s transition + buffer
 
       return `Focused on widget: ${targetWidget.title}`;
+    }
+  },
+  {
+    name: "get_editor_state",
+    description: "Get the current state of the canvas, including the list of widgets and specifically the CURRENTLY SELECTED widget. Call this to understand what the user is looking at or working on.",
+    inputSchema: z.object({}),
+    outputSchema: z.string(),
+    tool: async () => {
+      const store = useCRMStore.getState();
+      const widgets = store.widgets;
+      const selectedId = store.selectedWidgetId;
+
+      const selectedWidget = widgets.find(w => w.id === selectedId);
+
+      const summary = {
+        totalWidgets: widgets.length,
+        selectedWidget: selectedWidget ? {
+          id: selectedWidget.id,
+          title: selectedWidget.title,
+          component: selectedWidget.componentName,
+          props: selectedWidget.props
+        } : null,
+        allWidgets: widgets.map(w => ({
+          id: w.id,
+          title: w.title,
+          component: w.componentName
+        }))
+      };
+
+      return JSON.stringify(summary, null, 2);
     }
   }
 ];
