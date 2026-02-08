@@ -68,7 +68,7 @@ Generative CRM is an **AI-powered, prompt-driven CRM** that lets you create dash
 ### 🎨 Beautiful Canvas System
 - **Drag & Drop** — Freely position widgets anywhere on the canvas
 - **Resize** — Adjust widget sizes to your preference
-- **Infinite Canvas** — Pan around with mouse drag (Ctrl+F to center)
+
 - **Persistent Layouts** — Your layouts stay where you put them
 
 ### 💬 Conversational Interface
