@@ -646,20 +646,57 @@ export const BentoGrid = () => {
         document.body.style.cursor = '';
     }, [canvasOffset, setCanvasOffset, zoomLevel]);
 
-    // Handle Wheel Zoom
+    // Handle Wheel Zoom with cursor-directed zooming
     useEffect(() => {
         const handleWheel = (e: WheelEvent) => {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
-                const zoomFactor = -e.deltaY * 0.001;
-                const newZoom = Math.min(Math.max(0.1, zoomLevel + zoomFactor), 3);
-                setZoomLevel(newZoom);
+
+                const state = useCRMStore.getState();
+                const currentZoom = state.zoomLevel;
+                const currentOffset = state.canvasOffset;
+
+                // Calculate mouse position relative to the container
+                // We assume the container starts at 0,0 relative to the viewport for simplicity, 
+                // or we can calculate it if we had a ref. 
+                // Since it's full screen, e.clientX/Y works well enough, but let's be safe:
+                let mouseX = e.clientX;
+                let mouseY = e.clientY;
+
+                if (canvasRef.current && canvasRef.current.parentElement) {
+                    const rect = canvasRef.current.parentElement.getBoundingClientRect();
+                    mouseX -= rect.left;
+                    mouseY -= rect.top;
+                }
+
+                // Smooth exponential zoom
+                // e.deltaY is usually 100 or -100 for mouse wheels, or smaller/varying for trackpads
+                const zoomSensitivity = 0.0015;
+                const delta = -e.deltaY;
+                const zoomFactor = Math.exp(delta * zoomSensitivity);
+
+                const newZoom = Math.min(Math.max(0.1, currentZoom * zoomFactor), 3);
+
+                // Calculate new offset to keep the point under cursor stable
+                // Formula: newOffset = currentOffset + mousePos * (1/newZoom - 1/currentZoom)
+                // Derived from: mouseWorldPos = mouseScreenPos / zoom - offset
+                const dx = mouseX * (1 / newZoom - 1 / currentZoom);
+                const dy = mouseY * (1 / newZoom - 1 / currentZoom);
+
+                const newOffset = {
+                    x: currentOffset.x + dx,
+                    y: currentOffset.y + dy
+                };
+
+                state.setZoomLevel(newZoom);
+                state.setCanvasOffset(newOffset);
             }
         };
 
-        window.addEventListener('wheel', handleWheel, { passive: false });
-        return () => window.removeEventListener('wheel', handleWheel);
-    }, [zoomLevel, setZoomLevel]);
+        const container = canvasRef.current?.parentElement || window;
+        container.addEventListener('wheel', handleWheel as any, { passive: false });
+        return () => container.removeEventListener('wheel', handleWheel as any);
+    }, []);
 
     useEffect(() => {
         window.addEventListener('mousemove', handlePanMove);
