@@ -477,7 +477,7 @@ export const BentoGrid = () => {
         const unsub = useCRMStore.subscribe((state, prevState) => {
             if (canvasRef.current) {
                 const { zoomLevel, canvasOffset, isFocusing } = state;
-                const transition = (isFocusing) ? 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
+                const transition = (isFocusing) ? 'transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none';
 
                 // Only update if changed to avoid unnecessary paints (though browser handles this well)
                 if (state.zoomLevel !== prevState.zoomLevel ||
@@ -711,11 +711,11 @@ export const BentoGrid = () => {
 
                     // Also update DOM immediately if ref exists
                     if (canvasRef.current) {
-                        canvasRef.current.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                        canvasRef.current.style.transition = 'transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
                         canvasRef.current.style.transform = `scale(${store.zoomLevel}) translate(${newOffsetX}px, ${newOffsetY}px)`;
                     }
 
-                    setTimeout(() => store.setFocusing(false), 600);
+                    setTimeout(() => store.setFocusing(false), 1700);
                 }
             }
 

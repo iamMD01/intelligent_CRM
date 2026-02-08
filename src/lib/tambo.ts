@@ -103,7 +103,7 @@ export const tools: TamboTool[] = [
       // Turn off animation flag after transition finishes (plus buffer)
       setTimeout(() => {
         store.setFocusing(false);
-      }, 700); // 400ms transition + buffer
+      }, 1700); // 1.6s transition + buffer
 
       return `Focused on widget: ${targetWidget.title}`;
     }
