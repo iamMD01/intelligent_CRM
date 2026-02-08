@@ -196,13 +196,16 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
     { className, variant, size, data, title, showLegend = true, ...props },
     ref,
   ) => {
+    // Cast to any to safely destructure non-standard props that might have leaked in from store
+    const { colorTheme, description, ...domProps } = props as any;
+
     // If no data received yet, show loading
     if (!data) {
       return (
         <div
           ref={ref}
           className={cn(graphVariants({ variant, size }), className)}
-          {...props}
+          {...domProps}
         >
           <div className="p-4 h-full flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -233,7 +236,7 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
         <div
           ref={ref}
           className={cn(graphVariants({ variant, size }), className)}
-          {...props}
+          {...domProps}
         >
           <div className="p-4 h-full flex items-center justify-center">
             <div className="text-muted-foreground text-center">
@@ -258,7 +261,7 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
         <div
           ref={ref}
           className={cn(graphVariants({ variant, size }), className)}
-          {...props}
+          {...domProps}
         >
           <div className="p-4 h-full flex items-center justify-center">
             <div className="text-muted-foreground text-center">
@@ -469,7 +472,7 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
         <div
           ref={ref}
           className={cn(graphVariants({ variant, size }), className)}
-          {...props}
+          {...domProps}
         >
           <div className="p-4 h-full">
             {title && (
