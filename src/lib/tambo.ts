@@ -10,6 +10,8 @@ import {
   crmChartSchema,
   CRMList,
   crmListSchema,
+  CRMHeatmap,
+  crmHeatmapSchema,
 } from "@/components/tambo/crm-components";
 import { DataCard, dataCardSchema } from "@/components/ui/card-data";
 import type { TamboComponent } from "@tambo-ai/react";
@@ -135,5 +137,11 @@ export const components: TamboComponent[] = [
     description: "Display selectable data cards with titles, descriptions, and optional links.",
     component: DataCard,
     propsSchema: dataCardSchema,
+  },
+  {
+    name: "Heatmap",
+    description: "Display a 2D heatmap grid. Useful for time-based activity (Day x Hour), cohort analysis (Month x Month), or correlation matrices.",
+    component: CRMHeatmap,
+    propsSchema: crmHeatmapSchema,
   },
 ];

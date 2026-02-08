@@ -186,3 +186,142 @@ export const CRMList = ({ title, items = [], className }: CRMListProps) => {
         </div>
     );
 };
+// --- CRM Heatmap ---
+
+export const crmHeatmapSchema = z.object({
+    title: z.string().describe("The label of the heatmap"),
+    description: z.string().optional().describe("Brief description of what the heatmap shows"),
+    xLabels: z.array(z.string()).optional().describe("Need LABELS for the X-axis (columns). E.g., ['Mon', 'Tue', 'Wed']"),
+    yLabels: z.array(z.string()).optional().describe("Need LABELS for the Y-axis (rows). E.g., ['User A', 'User B']"),
+    data: z.array(z.array(z.number())).optional().describe("2D array of values. Outer array = rows (yLabels), Inner array = columns (xLabels)."),
+    values: z.array(z.array(z.number())).optional().describe("Alias for data"),
+    minValue: z.number().optional().describe("Minimum value for color scaling (default: 0)"),
+    maxValue: z.number().optional().describe("Maximum value for color scaling (default: max in data)"),
+    colorTheme: z.enum(["green", "blue", "red", "orange"]).optional().describe("Color theme for the heatmap"),
+    className: z.string().optional(),
+});
+
+export type CRMHeatmapProps = z.infer<typeof crmHeatmapSchema>;
+
+export const CRMHeatmap = (props: CRMHeatmapProps) => {
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+    const { messageId } = useWidgetContext();
+
+    // Register widget metadata to store
+    React.useEffect(() => {
+        if (messageId && props.title) {
+            useCRMStore.getState().updateWidget(messageId, {
+                title: props.title,
+                componentName: 'CRMHeatmap',
+                props: props
+            });
+        }
+    }, [messageId, props.title, props]);
+
+    const data: number[][] = props.data || (props as any).values || [];
+    const xLabels = props.xLabels || [];
+    const yLabels = props.yLabels || [];
+
+    const maxValue = props.maxValue ?? (data.length > 0 ? Math.max(...data.flat()) : 100);
+    const minValue = props.minValue ?? 0;
+
+    const getColor = (value: number) => {
+        const ratio = (value - minValue) / (maxValue - minValue || 1);
+        // Simple opacity based color scale
+        const alpha = Math.max(0.1, Math.min(1, ratio)); // min 10% opacity
+
+        const colors = {
+            green: isDark ? `rgba(74, 222, 128, ${alpha})` : `rgba(22, 163, 74, ${alpha})`,
+            blue: isDark ? `rgba(96, 165, 250, ${alpha})` : `rgba(37, 99, 235, ${alpha})`,
+            red: isDark ? `rgba(248, 113, 113, ${alpha})` : `rgba(220, 38, 38, ${alpha})`,
+            orange: isDark ? `rgba(251, 146, 60, ${alpha})` : `rgba(234, 88, 12, ${alpha})`,
+        };
+
+        return colors[props.colorTheme || 'green'];
+    };
+
+    return (
+        <div className={cn("p-4 rounded-2xl overflow-hidden flex flex-col h-full", props.className)}>
+            <div className="flex justify-between items-center mb-4">
+                <div>
+                    <h3 className={cn(
+                        "font-medium text-sm uppercase tracking-wide",
+                        isDark ? "text-zinc-400" : "text-zinc-500"
+                    )}>{props.title}</h3>
+                    {props.description && (
+                        <p className={cn("text-xs mt-1", isDark ? "text-zinc-500" : "text-zinc-400")}>
+                            {props.description}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-auto min-h-0">
+                <div className="grid gap-1" style={{
+                    gridTemplateColumns: `auto repeat(${xLabels.length}, minmax(40px, 1fr))`
+                }}>
+                    {/* Header Row */}
+                    <div className="h-6"></div> {/* Top-left corner empty */}
+                    {xLabels.map((label, i) => (
+                        <div key={i} className={cn(
+                            "text-xs font-medium text-center truncate px-1",
+                            isDark ? "text-zinc-500" : "text-zinc-400"
+                        )}>
+                            {label}
+                        </div>
+                    ))}
+
+                    {/* Data Rows */}
+                    {yLabels.map((yLabel, rowIdx) => (
+                        <React.Fragment key={rowIdx}>
+                            {/* Y-Axis Label */}
+                            <div className={cn(
+                                "text-xs font-medium truncate pr-2 flex items-center justify-end",
+                                isDark ? "text-zinc-500" : "text-zinc-400"
+                            )}>
+                                {yLabel}
+                            </div>
+
+                            {/* Cells */}
+                            {data[rowIdx]?.map((value, colIdx) => (
+                                <div
+                                    key={`${rowIdx}-${colIdx}`}
+                                    className="aspect-square rounded-md relative group flex items-center justify-center text-[10px]"
+                                    style={{ backgroundColor: getColor(value) }}
+                                    title={`${yLabel} x ${xLabels[colIdx]}: ${value}`}
+                                >
+                                    <span className={cn(
+                                        "opacity-0 group-hover:opacity-100 font-semibold transition-opacity select-none",
+                                        isDark ? "text-black mix-blend-screen" : "text-white"
+                                    )}>
+                                        {value}
+                                    </span>
+                                </div>
+                            ))}
+                        </React.Fragment>
+                    ))}
+                </div>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-2 flex items-center justify-end gap-2 text-xs text-zinc-500">
+                <span>Low</span>
+                <div className="flex gap-0.5 h-2 w-16 rounded overflow-hidden">
+                    {[0.1, 0.3, 0.5, 0.7, 0.9].map(alpha => (
+                        <div key={alpha} className="flex-1" style={{
+                            backgroundColor: props.colorTheme === 'blue'
+                                ? (isDark ? `rgba(96, 165, 250, ${alpha})` : `rgba(37, 99, 235, ${alpha})`)
+                                : (props.colorTheme === 'red'
+                                    ? (isDark ? `rgba(248, 113, 113, ${alpha})` : `rgba(220, 38, 38, ${alpha})`)
+                                    : (props.colorTheme === 'orange'
+                                        ? (isDark ? `rgba(251, 146, 60, ${alpha})` : `rgba(234, 88, 12, ${alpha})`)
+                                        : (isDark ? `rgba(74, 222, 128, ${alpha})` : `rgba(22, 163, 74, ${alpha})`)))
+                        }} />
+                    ))}
+                </div>
+                <span>High</span>
+            </div>
+        </div>
+    );
+};
