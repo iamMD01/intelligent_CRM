@@ -150,18 +150,14 @@ export const useCRMStore = create<CanvasState>()(
             }),
 
             updateWidget: (id, updates) => set((state) => {
+                // DEBUG LOG
+                if (updates.title) {
+                    console.log(`[Store] Updating widget ${id} title to: "${updates.title}"`);
+                }
                 return {
-                    widgets: state.widgets.map((w) => {
-                        if (w.id === id) {
-                            const newWidget = { ...w, ...updates };
-                            // If updates contains props, merge them instead of replacing
-                            if (updates.props) {
-                                newWidget.props = { ...w.props, ...updates.props };
-                            }
-                            return newWidget;
-                        }
-                        return w;
-                    })
+                    widgets: state.widgets.map((w) =>
+                        w.id === id ? { ...w, ...updates } : w
+                    )
                 };
             }),
 
