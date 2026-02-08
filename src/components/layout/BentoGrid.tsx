@@ -50,7 +50,35 @@ const WidgetRenderer = ({
 }) => {
     const { theme } = useThemeStore();
     const widgetRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const [isHovered, setIsHovered] = useState(false);
+    const hasMeasured = useRef(false);
+
+    // Auto-measure content size when widget is newly created
+    useEffect(() => {
+        if (!isNewlyCreated || hasMeasured.current || !contentRef.current || !onMeasure) return;
+
+        // Use ResizeObserver to wait for content to render properly
+        const observer = new ResizeObserver((entries) => {
+            const entry = entries[0];
+            if (entry && !hasMeasured.current) {
+                const { scrollWidth, scrollHeight } = entry.target;
+                // Add padding (16px * 2 = 32px) and some extra buffer
+                const measuredWidth = Math.max(200, Math.min(600, scrollWidth + 48));
+                const measuredHeight = Math.max(120, Math.min(500, scrollHeight + 48));
+
+                // Only update if content is larger than current layout
+                if (measuredWidth > layout.width || measuredHeight > layout.height) {
+                    onMeasure(widget.id, measuredWidth, measuredHeight);
+                }
+                hasMeasured.current = true;
+                observer.disconnect();
+            }
+        });
+
+        observer.observe(contentRef.current);
+        return () => observer.disconnect();
+    }, [isNewlyCreated, onMeasure, widget.id, layout.width, layout.height]);
 
     // Use refs for drag state to avoid re-renders during drag
     const isDragging = useRef(false);
@@ -260,6 +288,7 @@ const WidgetRenderer = ({
 
             {/* Widget card with Apple Keynote style - rounded corners, theme colors */}
             <div
+                ref={contentRef}
                 className={cn(
                     "w-full h-full rounded-2xl overflow-auto p-4",
                     theme === 'dark' ? "bg-black" : "bg-white"
@@ -635,6 +664,15 @@ export const BentoGrid = () => {
                                 onLayoutChange={(l) => setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }))}
                                 isSelected={selectedWidgetId === widget.id}
                                 isNewlyCreated={newlyCreatedWidgetIds.has(widget.id)}
+                                onMeasure={(id, width, height) => {
+                                    setWidgetLayouts(prev => {
+                                        const current = prev[id];
+                                        if (current) {
+                                            return { ...prev, [id]: { ...current, width, height } };
+                                        }
+                                        return prev;
+                                    });
+                                }}
                                 onContextMenu={(e, w) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, widget: w }); }}
                                 onRemove={() => { sounds.delete(); setHiddenMessageIds(prev => new Set([...prev, widget.messageId])); if (selectedWidgetId === widget.messageId) selectWidgetForChat(null); }}
                             />
