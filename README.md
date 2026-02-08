@@ -32,15 +32,15 @@ Generative CRM is an **AI-powered, prompt-driven CRM** that lets you create dash
 
 ### Creating Widgets with Natural Language
 ![Widget Creation](./public/images/demo-widget-creation.gif)
-*Replace with GIF showing: "Create a revenue chart for the last 6 months"*
 
 ### Editing Widgets Through Conversation
 ![Widget Editing](./public/images/demo-widget-editing.gif)
-*Replace with GIF showing: selecting a widget and asking AI to modify it*
 
 ### Multi-Canvas Dashboard Management
 ![Multiple Canvases](./public/images/demo-canvas.gif)
-*Replace with GIF showing creation and switching between conversation threads/canvases*
+
+### Local MCP Tool connection via .json import
+![Multiple Canvases](./public/images/demo-mcp.gif)
 
 ---
 
