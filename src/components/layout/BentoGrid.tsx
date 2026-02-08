@@ -28,6 +28,10 @@ interface CanvasWidgetData {
 // Jelly spring config
 const jellySpring = { stiffness: 400, damping: 25, mass: 0.8 };
 
+// TWEAK WIDGET CORNER RADIUS HERE
+// Use a larger value (e.g., 32px or 40px) to achieve a more "squircle" look.
+const WIDGET_CORNER_RADIUS = "32px";
+
 // Widget renderer - Apple Keynote style
 const WidgetRenderer = ({
     widget,
@@ -246,7 +250,10 @@ const WidgetRenderer = ({
         >
             {/* Selection ring */}
             {isSelected && (
-                <div className="absolute -inset-1 rounded-2xl ring-2 ring-emerald-500 ring-offset-2 pointer-events-none" />
+                <div
+                    style={{ borderRadius: `calc(${WIDGET_CORNER_RADIUS} + 4px)` }}
+                    className="absolute -inset-1 ring-2 ring-emerald-500 ring-offset-2 pointer-events-none"
+                />
             )}
 
             {/* Newly created animation - green pulsing border for 3 seconds */}
@@ -255,7 +262,8 @@ const WidgetRenderer = ({
                     initial={{ opacity: 1, scale: 1 }}
                     animate={{ opacity: [1, 0.5, 1], scale: [1, 1.02, 1] }}
                     transition={{ duration: 0.8, repeat: 3, ease: "easeInOut" }}
-                    className="absolute -inset-1 rounded-2xl ring-2 ring-emerald-400 ring-offset-2 pointer-events-none"
+                    style={{ borderRadius: `calc(${WIDGET_CORNER_RADIUS} + 4px)` }}
+                    className="absolute -inset-1 ring-2 ring-emerald-400 ring-offset-2 pointer-events-none"
                 />
             )}
 
@@ -289,8 +297,9 @@ const WidgetRenderer = ({
             {/* Widget card with Apple Keynote style - rounded corners, theme colors */}
             <div
                 ref={contentRef}
+                style={{ borderRadius: WIDGET_CORNER_RADIUS }}
                 className={cn(
-                    "w-full h-full rounded-2xl overflow-auto p-4",
+                    "w-full h-full overflow-auto p-4",
                     theme === 'dark' ? "bg-black" : "bg-white"
                 )}
             >
