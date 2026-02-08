@@ -367,7 +367,7 @@ const ContextMenu = ({ x, y, widget, onClose, onAddToChat }: {
 export const BentoGrid = () => {
     const { thread } = useTambo();
     const { theme } = useThemeStore();
-    const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat, widgetBeingReplaced, setWidgetBeingReplaced } = useCRMStore();
+    const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat, widgetBeingReplaced, setWidgetBeingReplaced, zoomLevel, setZoomLevel } = useCRMStore();
 
     const canvasRef = useRef<HTMLDivElement>(null);
     const isPanning = useRef(false);
@@ -632,17 +632,34 @@ export const BentoGrid = () => {
         if (!isPanning.current || !canvasRef.current) return;
         const dx = e.clientX - panStart.current.x;
         const dy = e.clientY - panStart.current.y;
-        canvasRef.current.style.transform = `translate(${canvasOffset.x + dx}px, ${canvasOffset.y + dy}px)`;
-    }, [canvasOffset]);
+        canvasRef.current.style.transform = `scale(${zoomLevel}) translate(${canvasOffset.x + dx / zoomLevel}px, ${canvasOffset.y + dy / zoomLevel}px)`;
+    }, [canvasOffset, zoomLevel]);
 
     const handlePanEnd = useCallback((e: MouseEvent) => {
         if (!isPanning.current) return;
         const dx = e.clientX - panStart.current.x;
         const dy = e.clientY - panStart.current.y;
         isPanning.current = false;
-        setCanvasOffset({ x: canvasOffset.x + dx, y: canvasOffset.y + dy });
+
+        // Adjust offset based on zoom level to keep panning consistent
+        setCanvasOffset({ x: canvasOffset.x + dx / zoomLevel, y: canvasOffset.y + dy / zoomLevel });
         document.body.style.cursor = '';
-    }, [canvasOffset, setCanvasOffset]);
+    }, [canvasOffset, setCanvasOffset, zoomLevel]);
+
+    // Handle Wheel Zoom
+    useEffect(() => {
+        const handleWheel = (e: WheelEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                const zoomFactor = -e.deltaY * 0.001;
+                const newZoom = Math.min(Math.max(0.1, zoomLevel + zoomFactor), 3);
+                setZoomLevel(newZoom);
+            }
+        };
+
+        window.addEventListener('wheel', handleWheel, { passive: false });
+        return () => window.removeEventListener('wheel', handleWheel);
+    }, [zoomLevel, setZoomLevel]);
 
     useEffect(() => {
         window.addEventListener('mousemove', handlePanMove);
@@ -740,7 +757,8 @@ export const BentoGrid = () => {
                     ref={canvasRef}
                     className="relative w-full h-full"
                     style={{
-                        transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+                        transform: `scale(${zoomLevel}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+                        transformOrigin: '0 0',
                         minHeight: '100vh',
                         transition: isAnimatingCenter ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
                     }}

@@ -50,8 +50,9 @@ interface CanvasState {
     // Widget being replaced (for in-place updates)
     widgetBeingReplaced: string | null;
 
-    // Canvas pan offset
+    // Canvas pan & zoom
     canvasOffset: { x: number; y: number };
+    zoomLevel: number;
 
     // Widget actions
     addWidget: (widget: Omit<CanvasWidget, 'id'>, element?: React.ReactNode) => string;
@@ -65,8 +66,9 @@ interface CanvasState {
     // Widget replacement
     setWidgetBeingReplaced: (id: string | null) => void;
 
-    // Canvas pan
+    // Canvas pan & zoom
     setCanvasOffset: (offset: { x: number; y: number }) => void;
+    setZoomLevel: (zoom: number) => void;
     resetCanvasCenter: () => void;
 }
 
@@ -77,6 +79,7 @@ export const useCRMStore = create<CanvasState>()(
             selectedWidgetId: null,
             widgetBeingReplaced: null,
             canvasOffset: { x: 0, y: 0 },
+            zoomLevel: 1,
 
             addWidget: (widget, element) => {
                 const id = crypto.randomUUID();
@@ -118,7 +121,9 @@ export const useCRMStore = create<CanvasState>()(
 
             setCanvasOffset: (offset) => set({ canvasOffset: offset }),
 
-            resetCanvasCenter: () => set({ canvasOffset: { x: 0, y: 0 } }),
+            setZoomLevel: (zoom) => set({ zoomLevel: zoom }),
+
+            resetCanvasCenter: () => set({ canvasOffset: { x: 0, y: 0 }, zoomLevel: 1 }),
         }),
         {
             name: 'intelligent-crm-canvas',
