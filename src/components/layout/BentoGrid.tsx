@@ -370,6 +370,51 @@ export const BentoGrid = () => {
     const [isMounted, setIsMounted] = useState(false);
     const [newlyCreatedWidgetIds, setNewlyCreatedWidgetIds] = useState<Set<string>>(new Set());
 
+    // Storage key based on thread ID for persistence
+    const storageKey = thread?.id ? `crm-layouts-${thread.id}` : null;
+    const hiddenStorageKey = thread?.id ? `crm-hidden-${thread.id}` : null;
+
+    // Load layouts from localStorage on mount
+    useEffect(() => {
+        if (!storageKey || !hiddenStorageKey) return;
+
+        try {
+            const savedLayouts = localStorage.getItem(storageKey);
+            if (savedLayouts) {
+                setWidgetLayouts(JSON.parse(savedLayouts));
+            }
+
+            const savedHidden = localStorage.getItem(hiddenStorageKey);
+            if (savedHidden) {
+                setHiddenMessageIds(new Set(JSON.parse(savedHidden)));
+            }
+        } catch (e) {
+            console.warn('Failed to load widget layouts from localStorage:', e);
+        }
+    }, [storageKey, hiddenStorageKey]);
+
+    // Save layouts to localStorage whenever they change
+    useEffect(() => {
+        if (!storageKey || !isMounted || Object.keys(widgetLayouts).length === 0) return;
+
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(widgetLayouts));
+        } catch (e) {
+            console.warn('Failed to save widget layouts to localStorage:', e);
+        }
+    }, [widgetLayouts, storageKey, isMounted]);
+
+    // Save hidden message IDs to localStorage whenever they change
+    useEffect(() => {
+        if (!hiddenStorageKey || !isMounted || hiddenMessageIds.size === 0) return;
+
+        try {
+            localStorage.setItem(hiddenStorageKey, JSON.stringify([...hiddenMessageIds]));
+        } catch (e) {
+            console.warn('Failed to save hidden IDs to localStorage:', e);
+        }
+    }, [hiddenMessageIds, hiddenStorageKey, isMounted]);
+
     // Prevent hydration mismatch
     useEffect(() => {
         setIsMounted(true);
