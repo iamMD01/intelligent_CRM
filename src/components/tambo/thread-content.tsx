@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { type TamboThreadMessage, useTambo } from "@tambo-ai/react";
 import { type VariantProps } from "class-variance-authority";
 import * as React from "react";
+import { Loader } from "@/components/layout/Loader";
 
 /**
  * @typedef ThreadContentContextValue
@@ -179,9 +180,25 @@ const ThreadContentMessages = React.forwardRef<
           </div>
         );
       })}
+
+      {/* Show loader when generating but no assistant message yet (waiting for first token) */}
+      {isGenerating && filteredMessages.length > 0 && filteredMessages[filteredMessages.length - 1].role === "user" && (
+        <div className="flex w-full justify-start animate-fade-in" data-slot="thread-loading-indicator">
+          <div className="flex flex-col w-full">
+            <div className="flex items-center gap-3 p-4">
+              {/* Optional: Add an avatar placeholder here if desired for consistency */}
+              <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                <div className="w-4 h-4 bg-zinc-200 dark:bg-zinc-700 rounded-full animate-pulse" />
+              </div>
+              <Loader />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });
+
 ThreadContentMessages.displayName = "ThreadContent.Messages";
 
 export { ThreadContent, ThreadContentMessages };
