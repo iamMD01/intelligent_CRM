@@ -219,9 +219,26 @@ export const CRMHeatmap = React.memo((props: CRMHeatmapProps) => {
         }
     }, [messageId, props.title, props]);
 
-    const data: number[][] = props.data || (props as any).values || [];
-    const xLabels = props.xLabels || [];
-    const yLabels = props.yLabels || [];
+    const rawData = props.data || (props as any).values || [];
+    // Ensure 2D array. If 1D number array, wrap it.
+    const data: number[][] = Array.isArray(rawData)
+        ? (rawData.length > 0 && !Array.isArray(rawData[0]) ? [rawData] : rawData)
+        : [];
+
+    let xLabels = props.xLabels || [];
+    let yLabels = props.yLabels || [];
+
+    // Robust fallback: If labels are missing but data exists, generate them
+    if (data.length > 0) {
+        if (yLabels.length === 0) {
+            // Generate empty labels or indices if yLabels missing
+            yLabels = data.map((_, i) => ``);
+        }
+        if (xLabels.length === 0 && data[0]) {
+            // Generate empty labels or indices if xLabels missing
+            xLabels = data[0].map((_, i) => ``);
+        }
+    }
 
     const maxValue = props.maxValue ?? (data.length > 0 ? Math.max(...data.flat()) : 100);
     const minValue = props.minValue ?? 0;
@@ -257,7 +274,12 @@ export const CRMHeatmap = React.memo((props: CRMHeatmapProps) => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto min-h-0">
+            <div className="flex-1 overflow-auto min-h-0 relative">
+                {data.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground italic">
+                        No heatmap data available
+                    </div>
+                )}
                 <div className="grid gap-1" style={{
                     gridTemplateColumns: `auto repeat(${xLabels.length}, minmax(40px, 1fr))`
                 }}>
@@ -284,21 +306,30 @@ export const CRMHeatmap = React.memo((props: CRMHeatmapProps) => {
                             </div>
 
                             {/* Cells */}
-                            {data[rowIdx]?.map((value, colIdx) => (
-                                <div
-                                    key={`${rowIdx}-${colIdx}`}
-                                    className="aspect-square rounded-md relative group flex items-center justify-center text-[10px]"
-                                    style={{ backgroundColor: getColor(value) }}
-                                    title={`${yLabel} x ${xLabels[colIdx]}: ${value}`}
-                                >
-                                    <span className={cn(
-                                        "opacity-0 group-hover:opacity-100 font-semibold transition-opacity select-none",
-                                        isDark ? "text-black mix-blend-screen" : "text-white"
-                                    )}>
-                                        {value}
-                                    </span>
-                                </div>
-                            ))}
+                            {data[rowIdx]?.map((val, colIdx) => {
+                                // Robust value extraction
+                                let value = 0;
+                                const raw = val as any;
+                                if (typeof raw === 'number') value = raw;
+                                else if (typeof raw === 'string') value = parseFloat(raw) || 0;
+                                else if (raw && typeof raw === 'object' && 'value' in raw) value = Number(raw.value) || 0;
+
+                                return (
+                                    <div
+                                        key={`${rowIdx}-${colIdx}`}
+                                        className="aspect-square rounded-md relative group flex items-center justify-center text-[10px]"
+                                        style={{ backgroundColor: getColor(value) }}
+                                        title={`${yLabel} x ${xLabels && xLabels[colIdx]}: ${value}`}
+                                    >
+                                        <span className={cn(
+                                            "opacity-0 group-hover:opacity-100 font-semibold transition-opacity select-none",
+                                            isDark ? "text-black mix-blend-screen" : "text-white"
+                                        )}>
+                                            {Math.round(value * 10) / 10}
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </React.Fragment>
                     ))}
                 </div>
