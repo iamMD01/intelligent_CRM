@@ -370,6 +370,37 @@ export const BentoGrid = () => {
     const [isMounted, setIsMounted] = useState(false);
     const [newlyCreatedWidgetIds, setNewlyCreatedWidgetIds] = useState<Set<string>>(new Set());
 
+    // Undo history stack (stores previous states)
+    const undoHistory = useRef<Array<{
+        layouts: Record<string, WidgetLayout>;
+        hidden: Set<string>;
+    }>>([]);
+    const MAX_UNDO_HISTORY = 50;
+
+    // Save state to undo history before making changes
+    const saveToUndoHistory = useCallback(() => {
+        undoHistory.current.push({
+            layouts: { ...widgetLayouts },
+            hidden: new Set(hiddenMessageIds)
+        });
+        // Limit history size
+        if (undoHistory.current.length > MAX_UNDO_HISTORY) {
+            undoHistory.current.shift();
+        }
+    }, [widgetLayouts, hiddenMessageIds]);
+
+    // Undo function
+    const undo = useCallback(() => {
+        if (undoHistory.current.length === 0) return;
+
+        const previousState = undoHistory.current.pop();
+        if (previousState) {
+            setWidgetLayouts(previousState.layouts);
+            setHiddenMessageIds(previousState.hidden);
+            sounds.select(); // Play a subtle sound for undo
+        }
+    }, []);
+
     // Storage key based on thread ID for persistence
     const storageKey = thread?.id ? `crm-layouts-${thread.id}` : null;
     const hiddenStorageKey = thread?.id ? `crm-hidden-${thread.id}` : null;
@@ -568,7 +599,7 @@ export const BentoGrid = () => {
         }
     }, [widgets, widgetBeingReplaced]);
 
-    // Ctrl+F to center
+    // Ctrl+F to center, Ctrl+Z to undo
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
@@ -577,10 +608,15 @@ export const BentoGrid = () => {
                 resetCanvasCenter();
                 setTimeout(() => setIsAnimatingCenter(false), 500);
             }
+            // Ctrl+Z to undo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, [resetCanvasCenter]);
+    }, [resetCanvasCenter, undo]);
 
     // Canvas pan - optimized with direct DOM
     const handlePanMove = useCallback((e: MouseEvent) => {
@@ -706,7 +742,10 @@ export const BentoGrid = () => {
                                 key={widget.id}
                                 widget={widget}
                                 layout={widgetLayouts[widget.id] || { x: 10, y: 10, width: 340, height: 260 }}
-                                onLayoutChange={(l) => setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }))}
+                                onLayoutChange={(l) => {
+                                    saveToUndoHistory();
+                                    setWidgetLayouts(prev => ({ ...prev, [widget.id]: l }));
+                                }}
                                 isSelected={selectedWidgetId === widget.id}
                                 isNewlyCreated={newlyCreatedWidgetIds.has(widget.id)}
                                 onMeasure={(id, width, height) => {
@@ -719,7 +758,12 @@ export const BentoGrid = () => {
                                     });
                                 }}
                                 onContextMenu={(e, w) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, widget: w }); }}
-                                onRemove={() => { sounds.delete(); setHiddenMessageIds(prev => new Set([...prev, widget.messageId])); if (selectedWidgetId === widget.messageId) selectWidgetForChat(null); }}
+                                onRemove={() => {
+                                    saveToUndoHistory();
+                                    sounds.delete();
+                                    setHiddenMessageIds(prev => new Set([...prev, widget.messageId]));
+                                    if (selectedWidgetId === widget.messageId) selectWidgetForChat(null);
+                                }}
                             />
                         ))}
                     </AnimatePresence>
