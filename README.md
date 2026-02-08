@@ -50,6 +50,11 @@ Generative CRM is an **AI-powered, prompt-driven CRM** that lets you create dash
 - **Natural Language Interface** — Describe what you need in plain English
 - **Smart Context Understanding** — The AI understands your data and generates relevant visualizations
 - **Widget Editing** — Select any widget and ask the AI to modify, update, or replace it
+- **JSON Import** — Generate widgets directly from JSON data structures
+
+### 🔌 Integrations
+- **MCP Support** — Connect to Model Context Protocol servers to fetch real-world data
+- **Data Connectors** — Import data seamlessly from external sources
 
 ### 📊 Rich Widget Library
 | Widget Type | Description |
@@ -57,6 +62,7 @@ Generative CRM is an **AI-powered, prompt-driven CRM** that lets you create dash
 | 📈 **Charts** | Bar, Line, Pie, Area charts with Recharts |
 | 📋 **Stats Cards** | Key metrics with trends and comparisons |
 | 📝 **Lists** | Sortable, filterable data lists |
+| 🔥 **Heatmap** | Visualize activity density and patterns |
 | 🎯 **Custom** | Any component the AI generates |
 
 ### 🎨 Beautiful Canvas System
