@@ -75,6 +75,10 @@ interface CanvasState {
     // Animation
     isFocusing: boolean;
     setFocusing: (isFocusing: boolean) => void;
+
+    // Data Context for Local Tools
+    dataContext: Record<string, any>;
+    setDataContext: (data: Record<string, any>) => void;
 }
 
 export const useCRMStore = create<CanvasState>()(
@@ -88,6 +92,11 @@ export const useCRMStore = create<CanvasState>()(
 
             isFocusing: false,
             setFocusing: (isFocusing) => set({ isFocusing }),
+
+            dataContext: {}, // Empty by default, falls back to mock-data.ts
+            setDataContext: (data) => set((state) => ({
+                dataContext: { ...state.dataContext, ...data }
+            })),
 
             addWidget: (widget, element) => {
                 const id = crypto.randomUUID();

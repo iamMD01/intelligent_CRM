@@ -42,16 +42,26 @@ export const tools: TamboTool[] = [
     outputSchema: z.string(),
     tool: async ({ query }) => {
       const q = query.toLowerCase();
+
+      // Check for user-provided data override
+      const store = useCRMStore.getState();
+      const context = store.dataContext || {};
+
       let data: any = null;
 
+      // Helper to check both context and mock
+      const getData = (key: string, fallback: any) => {
+        return context[key] || fallback;
+      };
+
       if (q.includes("pipeline") || q.includes("stage")) {
-        data = CRM_DATA.pipeline;
+        data = getData("pipeline", CRM_DATA.pipeline);
       } else if (q.includes("deal") || q.includes("recent")) {
-        data = CRM_DATA.recentDeals;
+        data = getData("recentDeals", CRM_DATA.recentDeals);
       } else if (q.includes("revenue") || q.includes("money") || q.includes("trend")) {
-        data = CRM_DATA.revenueHistory;
+        data = getData("revenueHistory", CRM_DATA.revenueHistory);
       } else if (q.includes("team") || q.includes("rep") || q.includes("sales")) {
-        data = CRM_DATA.teamPerformance;
+        data = getData("teamPerformance", CRM_DATA.teamPerformance);
       } else {
         data = {
           suggestedQueries: ["Show pipeline", "Recent deals", "Revenue history", "Team performance"],

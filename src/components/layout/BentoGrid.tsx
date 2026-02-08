@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
+import { DataConnector } from "@/components/tambo/DataConnector";
 import { useCRMStore } from "@/lib/crm-store";
 import { useThemeStore } from "@/lib/theme-store";
 import { useTambo } from "@tambo-ai/react";
@@ -975,6 +976,7 @@ export const BentoGrid = () => {
                     <ContextMenu x={contextMenu.x} y={contextMenu.y} widget={contextMenu.widget} onClose={() => setContextMenu(null)} onAddToChat={() => { sounds.addToChat(); selectWidgetForChat(contextMenu.widget.id); setContextMenu(null); }} />
                 )}
             </AnimatePresence>
+            <DataConnector />
         </>
     );
 };
