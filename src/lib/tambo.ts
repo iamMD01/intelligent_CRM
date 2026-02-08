@@ -73,6 +73,52 @@ export const tools: TamboTool[] = [
     },
   },
   {
+    name: "updateWidgetData",
+    description: "Update an existing widget's data or appearance without recreating it. Use this for real-time adjustments (e.g., changing a single value, color, or label).",
+    inputSchema: z.object({
+      widgetId: z.string().optional().describe("The ID of the widget (preferred)"),
+      widgetName: z.string().optional().describe("The fuzzy name/title of the widget if ID is unknown"),
+      updates: z.object({
+        value: z.union([z.string(), z.number()]).optional(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        trend: z.string().optional(),
+        trendValue: z.string().optional(),
+        color: z.string().optional(),
+        colorTheme: z.string().optional(),
+        data: z.array(z.any()).optional(),
+        items: z.array(z.any()).optional(),
+        xLabels: z.array(z.string()).optional(),
+        yLabels: z.array(z.string()).optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional(),
+      }).describe("The new props to apply."),
+    }),
+    outputSchema: z.string(),
+    tool: async ({ widgetId, widgetName, updates }) => {
+      const store = useCRMStore.getState();
+      const widgets = store.widgets;
+
+      let targetWidget = null;
+      if (widgetId) targetWidget = widgets.find(w => w.id === widgetId);
+      if (!targetWidget && widgetName) {
+        const lower = widgetName.toLowerCase();
+        targetWidget = widgets.find(w => w.title.toLowerCase().includes(lower));
+      }
+
+      if (!targetWidget) return "Could not find widget to update.";
+
+      // Apply the update
+      store.updateWidget(targetWidget.id, { props: updates });
+
+      // Also focus it to show the change
+      store.setFocusing(true);
+      setTimeout(() => store.setFocusing(false), 1700);
+
+      return `Successfully updated ${targetWidget.title}.`;
+    }
+  },
+  {
     name: "focusOnWidget",
     description: "Pan and zoom the canvas to focus on a specific widget. Use this when discussing a specific chart or metric.",
     inputSchema: z.object({
