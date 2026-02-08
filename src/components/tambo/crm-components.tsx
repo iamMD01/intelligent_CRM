@@ -11,6 +11,8 @@ import { useThemeStore } from "@/lib/theme-store";
 
 // --- CRM Stat Card ---
 
+import { useWidgetContext } from "@/lib/widget-context";
+
 export const crmStatCardSchema = z.object({
     title: z.string().describe("The label of the statistic (e.g., 'Total Revenue')"),
     value: z.string().describe("The main value to display (e.g., '$4,350.33')"),
@@ -25,6 +27,18 @@ export type CRMStatCardProps = z.infer<typeof crmStatCardSchema>;
 export const CRMStatCard = ({ title, value, trend, trendDirection = "neutral", subtext, className }: CRMStatCardProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
+    const { messageId } = useWidgetContext();
+
+    // Register widget metadata to store
+    React.useEffect(() => {
+        if (messageId && title) {
+            useCRMStore.getState().updateWidget(messageId, {
+                title: title,
+                componentName: 'CRMStatCard',
+                props: { title, value, trend, trendDirection, subtext }
+            });
+        }
+    }, [messageId, title, value, trend, trendDirection, subtext]);
 
     return (
         <div className={cn("p-4 rounded-2xl h-full", className)}>
@@ -67,6 +81,18 @@ export type CRMChartProps = z.infer<typeof crmChartSchema>;
 export const CRMChart = (props: CRMChartProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
+    const { messageId } = useWidgetContext();
+
+    // Register widget metadata to store
+    React.useEffect(() => {
+        if (messageId && props.title) {
+            useCRMStore.getState().updateWidget(messageId, {
+                title: props.title,
+                componentName: 'CRMChart',
+                props: props
+            });
+        }
+    }, [messageId, props.title, props]);
 
     return (
         <div className={cn("p-4 rounded-2xl overflow-hidden flex flex-col h-full", props.className)}>
@@ -107,6 +133,18 @@ export type CRMListProps = z.infer<typeof crmListSchema>;
 export const CRMList = ({ title, items = [], className }: CRMListProps) => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
+    const { messageId } = useWidgetContext();
+
+    // Register widget metadata to store
+    React.useEffect(() => {
+        if (messageId && title) {
+            useCRMStore.getState().updateWidget(messageId, {
+                title: title,
+                componentName: 'CRMList',
+                props: { title, items }
+            });
+        }
+    }, [messageId, title, items]);
 
     return (
         <div className={cn("p-4 rounded-2xl h-full", className)}>

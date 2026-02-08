@@ -8,8 +8,9 @@ import { useTambo } from "@tambo-ai/react";
 import { cn } from "@/lib/utils";
 import { Trash2, MessageSquarePlus, Sparkles, GripVertical } from "lucide-react";
 import { sounds } from "@/lib/sounds";
+import { WidgetContext } from "@/lib/widget-context";
 
-// Widget position and size state
+// Widget position and size state (force rebuild)
 interface WidgetLayout {
     x: number;
     y: number;
@@ -31,6 +32,12 @@ const jellySpring = { stiffness: 400, damping: 25, mass: 0.8 };
 // TWEAK WIDGET CORNER RADIUS HERE
 // Use a larger value (e.g., 32px or 40px) to achieve a more "squircle" look.
 const WIDGET_CORNER_RADIUS = "32px";
+
+// Debug helper to watch store title
+const StoreTitleWatcher = ({ id }: { id: string }) => {
+    const storeWidget = useCRMStore(state => state.widgets.find(w => w.id === id));
+    return <span className="text-blue-500">Store: {storeWidget?.title || 'Not Found'}</span>;
+};
 
 // Widget renderer - Apple Keynote style
 const WidgetRenderer = ({
@@ -303,7 +310,13 @@ const WidgetRenderer = ({
                     theme === 'dark' ? "bg-black" : "bg-white"
                 )}
             >
-                {widget.renderedComponent}
+                {React.isValidElement(widget.renderedComponent)
+                    ? (
+                        <WidgetContext.Provider value={{ messageId: widget.messageId }}>
+                            {widget.renderedComponent}
+                        </WidgetContext.Provider>
+                    )
+                    : widget.renderedComponent}
             </div>
 
             {/* Corner resize handles */}
@@ -367,13 +380,14 @@ const ContextMenu = ({ x, y, widget, onClose, onAddToChat }: {
 export const BentoGrid = () => {
     const { thread } = useTambo();
     const { theme } = useThemeStore();
-    const { selectedWidgetId, canvasOffset, setCanvasOffset, resetCanvasCenter, selectWidgetForChat, widgetBeingReplaced, setWidgetBeingReplaced, zoomLevel, setZoomLevel } = useCRMStore();
+    // OPTIMIZATION: Do NOT destructure zoomLevel/canvasOffset here to prevent re-renders on scroll
+    // We will use subscribe to update DOM manually
+    const { selectedWidgetId, selectWidgetForChat, widgetBeingReplaced, setWidgetBeingReplaced, isFocusing } = useCRMStore();
 
     const canvasRef = useRef<HTMLDivElement>(null);
     const isPanning = useRef(false);
     const panStart = useRef({ x: 0, y: 0 });
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; widget: CanvasWidgetData } | null>(null);
-    const [isAnimatingCenter, setIsAnimatingCenter] = useState(false);
     const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(new Set());
     const [widgetLayouts, setWidgetLayouts] = useState<Record<string, WidgetLayout>>({});
     const [isMounted, setIsMounted] = useState(false);
@@ -458,15 +472,116 @@ export const BentoGrid = () => {
     // Prevent hydration mismatch
     useEffect(() => {
         setIsMounted(true);
+
+        // Subscribe to store changes to update transform without re-rendering component
+        const unsub = useCRMStore.subscribe((state, prevState) => {
+            if (canvasRef.current) {
+                const { zoomLevel, canvasOffset, isFocusing } = state;
+                const transition = (isFocusing) ? 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
+
+                // Only update if changed to avoid unnecessary paints (though browser handles this well)
+                if (state.zoomLevel !== prevState.zoomLevel ||
+                    state.canvasOffset !== prevState.canvasOffset ||
+                    state.isFocusing !== prevState.isFocusing) {
+
+                    canvasRef.current.style.transition = transition;
+                    canvasRef.current.style.transform = `scale(${zoomLevel}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`;
+                }
+            }
+        });
+
+        // Initial sync
+        if (canvasRef.current) {
+            const state = useCRMStore.getState();
+            canvasRef.current.style.transform = `scale(${state.zoomLevel}) translate(${state.canvasOffset.x}px, ${state.canvasOffset.y}px)`;
+        }
+
+        return unsub;
     }, []);
 
     // Extract widgets from thread
     const widgets: CanvasWidgetData[] = React.useMemo(() => {
         if (!thread?.messages) return [];
+
         return thread.messages
             .filter(msg => msg.role === 'assistant' && msg.renderedComponent && !msg.isCancelled && !hiddenMessageIds.has(msg.id))
-            .map(msg => ({ id: msg.id, messageId: msg.id, renderedComponent: msg.renderedComponent, title: `Widget ${msg.id.substring(0, 6)}` }));
+            .map(msg => {
+                let title = `Widget ${msg.id.substring(0, 6)}`;
+
+                // Strategy 1: Check renderedComponent props (Most reliable for direct components)
+                if (React.isValidElement(msg.renderedComponent)) {
+                    const props = (msg.renderedComponent.props as any) || {};
+                    if (props.title) {
+                        title = props.title;
+                    }
+                }
+
+                // Strategy 2: Check tool calls (OpenAI format)
+                if (title.startsWith("Widget ") && msg.tool_calls && msg.tool_calls.length > 0) {
+                    // @ts-ignore
+                    const args = msg.tool_calls[0].function?.arguments;
+                    if (args) {
+                        try {
+                            const parsed = typeof args === 'string' ? JSON.parse(args) : args;
+                            if (parsed.title) title = parsed.title;
+                        } catch (e) {
+                            console.warn("Title parse error:", e);
+                        }
+                    }
+                }
+
+                // Strategy 3: Check props/componentProps property on message (Tambo specific)
+                if (title.startsWith("Widget ")) {
+                    // @ts-ignore
+                    const directProps = msg.props || msg.componentProps;
+                    if (directProps && directProps.title) {
+                        title = directProps.title;
+                    }
+                }
+
+                // Strategy 4: Fallback regex on content
+                const content = msg.content as any;
+                if (title.startsWith("Widget ") && typeof content === 'string' && content.includes('"title":')) {
+                    try {
+                        const match = content.match(/"title":\s*"([^"]+)"/);
+                        if (match && match[1]) title = match[1];
+                    } catch (e) { }
+                }
+
+                return {
+                    id: msg.id,
+                    messageId: msg.id,
+                    renderedComponent: msg.renderedComponent,
+                    title: title
+                };
+            });
     }, [thread?.messages, hiddenMessageIds]);
+
+    // Sync visible widgets to store for "The Force" tools
+    useEffect(() => {
+        if (!widgets || widgets.length === 0) return;
+
+        // Map CanvasWidgetData to CanvasWidget for store
+        const storeWidgets = widgets.map(w => {
+            const layout = widgetLayouts[w.id] || { x: 0, y: 0, width: 300, height: 200 };
+            return {
+                id: w.id,
+                type: 'custom', // Default since we don't know exact type easily yet
+                componentName: 'Unknown',
+                title: w.title,
+                props: {},
+                messageId: w.messageId,
+                position: { x: layout.x, y: layout.y },
+                size: { width: layout.width, height: layout.height }
+            };
+        });
+
+        // Only sync if different to avoid loops? 
+        // useCRMStore.getState().syncWidgets is a setter, so it triggers subscribers.
+        // We should be careful. But standard usage is fine for now as widgets only change on message update.
+        useCRMStore.getState().syncWidgets(storeWidgets as any); // Type assertion needed due to strict store types
+
+    }, [widgets, widgetLayouts]);
 
     // Init layouts with smart sizing based on content type
     useEffect(() => {
@@ -575,25 +690,32 @@ export const BentoGrid = () => {
             // Track newly created widgets for green animation
             setNewlyCreatedWidgetIds(prev => new Set([...prev, ...newWidgetIds]));
 
-            // Auto-center canvas on the last newly created widget
+            // Auto-center canvas on the last newly created widget (Moved logic inside useEffect to access state safely)
             if (newWidgetIds.length > 0) {
                 const lastNewWidgetId = newWidgetIds[newWidgetIds.length - 1];
                 const widgetLayout = newLayouts[lastNewWidgetId];
                 if (widgetLayout) {
-                    // Calculate offset to center the widget on screen
                     const viewportWidth = window.innerWidth;
                     const viewportHeight = window.innerHeight;
                     const widgetCenterX = widgetLayout.x + widgetLayout.width / 2;
                     const widgetCenterY = widgetLayout.y + widgetLayout.height / 2;
 
-                    // Calculate new canvas offset to center this widget
                     const newOffsetX = viewportWidth / 2 - widgetCenterX;
-                    const newOffsetY = viewportHeight / 2 - widgetCenterY - 50; // -50 to account for chat island
+                    const newOffsetY = viewportHeight / 2 - widgetCenterY - 50;
 
-                    // Animate to new position
-                    setIsAnimatingCenter(true);
-                    setCanvasOffset({ x: newOffsetX, y: newOffsetY });
-                    setTimeout(() => setIsAnimatingCenter(false), 400);
+                    const store = useCRMStore.getState();
+                    store.setFocusing(true);
+
+                    // We must update store for consistency
+                    store.setCanvasOffset({ x: newOffsetX, y: newOffsetY });
+
+                    // Also update DOM immediately if ref exists
+                    if (canvasRef.current) {
+                        canvasRef.current.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                        canvasRef.current.style.transform = `scale(${store.zoomLevel}) translate(${newOffsetX}px, ${newOffsetY}px)`;
+                    }
+
+                    setTimeout(() => store.setFocusing(false), 600);
                 }
             }
 
@@ -608,15 +730,9 @@ export const BentoGrid = () => {
         }
     }, [widgets, widgetBeingReplaced]);
 
-    // Ctrl+F to center, Ctrl+Z to undo
+    // Ctrl+Z to undo
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                e.preventDefault();
-                setIsAnimatingCenter(true);
-                resetCanvasCenter();
-                setTimeout(() => setIsAnimatingCenter(false), 500);
-            }
             // Ctrl+Z to undo
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
                 e.preventDefault();
@@ -625,15 +741,27 @@ export const BentoGrid = () => {
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, [resetCanvasCenter, undo]);
+    }, [undo]);
 
-    // Canvas pan - optimized with direct DOM
+    // Canvas pan - optimized with direct DOM and store state
     const handlePanMove = useCallback((e: MouseEvent) => {
         if (!isPanning.current || !canvasRef.current) return;
+
+        const state = useCRMStore.getState();
+        const currentZoom = state.zoomLevel;
+        const currentOffset = state.canvasOffset;
+
         const dx = e.clientX - panStart.current.x;
         const dy = e.clientY - panStart.current.y;
-        canvasRef.current.style.transform = `scale(${zoomLevel}) translate(${canvasOffset.x + dx / zoomLevel}px, ${canvasOffset.y + dy / zoomLevel}px)`;
-    }, [canvasOffset, zoomLevel]);
+
+        // Immediate DOM update for performance
+        // We calculate the NEW offset here to preview it
+        const newX = currentOffset.x + dx / currentZoom;
+        const newY = currentOffset.y + dy / currentZoom;
+
+        canvasRef.current.style.transform = `scale(${currentZoom}) translate(${newX}px, ${newY}px)`;
+        canvasRef.current.style.transition = 'none'; // Ensure no lag during drag
+    }, []);
 
     const handlePanEnd = useCallback((e: MouseEvent) => {
         if (!isPanning.current) return;
@@ -641,10 +769,15 @@ export const BentoGrid = () => {
         const dy = e.clientY - panStart.current.y;
         isPanning.current = false;
 
+        const state = useCRMStore.getState();
+
         // Adjust offset based on zoom level to keep panning consistent
-        setCanvasOffset({ x: canvasOffset.x + dx / zoomLevel, y: canvasOffset.y + dy / zoomLevel });
+        state.setCanvasOffset({
+            x: state.canvasOffset.x + dx / state.zoomLevel,
+            y: state.canvasOffset.y + dy / state.zoomLevel
+        });
         document.body.style.cursor = '';
-    }, [canvasOffset, setCanvasOffset, zoomLevel]);
+    }, []);
 
     // Handle Wheel Zoom with cursor-directed zooming
     useEffect(() => {
@@ -779,6 +912,8 @@ export const BentoGrid = () => {
         );
     }
 
+
+
     return (
         <>
             {/* Canvas with Apple Keynote style background */}
@@ -794,10 +929,9 @@ export const BentoGrid = () => {
                     ref={canvasRef}
                     className="relative w-full h-full"
                     style={{
-                        transform: `scale(${zoomLevel}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
                         transformOrigin: '0 0',
                         minHeight: '100vh',
-                        transition: isAnimatingCenter ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
+                        // Transform is managed by direct DOM manipulation for performance
                     }}
                 >
                     <AnimatePresence>
@@ -833,21 +967,7 @@ export const BentoGrid = () => {
                     </AnimatePresence>
                 </div>
 
-                <AnimatePresence>
-                    {isAnimatingCenter && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className={cn(
-                                "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 rounded-full text-sm shadow-lg pointer-events-none z-50",
-                                theme === 'dark' ? "bg-white text-black" : "bg-zinc-900 text-white"
-                            )}
-                        >
-                            Centered
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+
             </div>
 
             <AnimatePresence>

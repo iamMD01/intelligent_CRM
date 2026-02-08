@@ -58,6 +58,7 @@ interface CanvasState {
     addWidget: (widget: Omit<CanvasWidget, 'id'>, element?: React.ReactNode) => string;
     updateWidget: (id: string, updates: Partial<CanvasWidget>) => void;
     removeWidget: (id: string) => void;
+    syncWidgets: (widgets: CanvasWidget[]) => void;
 
     // Selection
     selectWidgetForChat: (id: string | null) => void;
@@ -70,6 +71,10 @@ interface CanvasState {
     setCanvasOffset: (offset: { x: number; y: number }) => void;
     setZoomLevel: (zoom: number) => void;
     resetCanvasCenter: () => void;
+
+    // Animation
+    isFocusing: boolean;
+    setFocusing: (isFocusing: boolean) => void;
 }
 
 export const useCRMStore = create<CanvasState>()(
@@ -80,6 +85,9 @@ export const useCRMStore = create<CanvasState>()(
             widgetBeingReplaced: null,
             canvasOffset: { x: 0, y: 0 },
             zoomLevel: 1,
+
+            isFocusing: false,
+            setFocusing: (isFocusing) => set({ isFocusing }),
 
             addWidget: (widget, element) => {
                 const id = crypto.randomUUID();
@@ -96,11 +104,53 @@ export const useCRMStore = create<CanvasState>()(
                 return id;
             },
 
-            updateWidget: (id, updates) => set((state) => ({
-                widgets: state.widgets.map((w) =>
-                    w.id === id ? { ...w, ...updates } : w
-                )
-            })),
+            syncWidgets: (incomingWidgets) => set((state) => {
+                const existingMap = new Map(state.widgets.map(w => [w.id, w]));
+
+                const mergedWidgets = incomingWidgets.map(newW => {
+                    const existing = existingMap.get(newW.id);
+                    if (existing) {
+                        // Preserve title and componentName if they are "better" (not default/unknown)
+                        // If current title is "Widget ...", overwrite it? 
+                        // Actually, if existing has a specific title (not starting with "Widget "), keep it.
+                        // Or simply: merge props, but let incoming (position) win?
+                        // Let's keep existing title if it doesn't look like a generated ID title, OR if incoming is just fallback.
+                        // Safe bet: prefer existing known title over incoming fallback.
+
+                        const hasRealTitle = existing.title && !existing.title.startsWith("Widget ");
+                        const incomingIsFallback = newW.title.startsWith("Widget ");
+                        const preservedTitle = (hasRealTitle && incomingIsFallback) ? existing.title : newW.title;
+
+                        // DEBUG LOG
+                        if (hasRealTitle && incomingIsFallback) {
+                            console.log(`[Store] Preserving title for ${newW.id}: "${existing.title}" vs incoming "${newW.title}"`);
+                        }
+
+                        return {
+                            ...newW,
+                            // Verify if we should keep existing title
+                            title: preservedTitle,
+                            // Keep props if incoming is empty
+                            props: Object.keys(newW.props).length > 0 ? newW.props : existing.props,
+                            componentName: newW.componentName === 'Unknown' ? existing.componentName : newW.componentName
+                        };
+                    }
+                    return newW;
+                });
+                return { widgets: mergedWidgets };
+            }),
+
+            updateWidget: (id, updates) => set((state) => {
+                // DEBUG LOG
+                if (updates.title) {
+                    console.log(`[Store] Updating widget ${id} title to: "${updates.title}"`);
+                }
+                return {
+                    widgets: state.widgets.map((w) =>
+                        w.id === id ? { ...w, ...updates } : w
+                    )
+                };
+            }),
 
             removeWidget: (id) => {
                 removeWidgetElement(id);
