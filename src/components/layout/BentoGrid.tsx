@@ -461,6 +461,28 @@ export const BentoGrid = () => {
             // Track newly created widgets for green animation
             setNewlyCreatedWidgetIds(prev => new Set([...prev, ...newWidgetIds]));
 
+            // Auto-center canvas on the last newly created widget
+            if (newWidgetIds.length > 0) {
+                const lastNewWidgetId = newWidgetIds[newWidgetIds.length - 1];
+                const widgetLayout = newLayouts[lastNewWidgetId];
+                if (widgetLayout) {
+                    // Calculate offset to center the widget on screen
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const widgetCenterX = widgetLayout.x + widgetLayout.width / 2;
+                    const widgetCenterY = widgetLayout.y + widgetLayout.height / 2;
+
+                    // Calculate new canvas offset to center this widget
+                    const newOffsetX = viewportWidth / 2 - widgetCenterX;
+                    const newOffsetY = viewportHeight / 2 - widgetCenterY - 50; // -50 to account for chat island
+
+                    // Animate to new position
+                    setIsAnimatingCenter(true);
+                    setCanvasOffset({ x: newOffsetX, y: newOffsetY });
+                    setTimeout(() => setIsAnimatingCenter(false), 400);
+                }
+            }
+
             // Remove from newly created after 3 seconds
             setTimeout(() => {
                 setNewlyCreatedWidgetIds(prev => {
