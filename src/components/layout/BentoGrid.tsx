@@ -873,7 +873,17 @@ export const BentoGrid = () => {
             window.removeEventListener('mouseup', handlePanEnd);
         };
     }, [handlePanMove, handlePanEnd]);
-
+    // Fix for visible widgets on initial load
+    useEffect(() => {
+        if (isMounted) {
+            // React-grid-layout sometime needs a resize event to calculate widths correctly
+            const triggerResize = () => window.dispatchEvent(new Event('resize'));
+            triggerResize();
+            // Double check after a small delay
+            const timer = setTimeout(triggerResize, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isMounted]);
     const handlePanStart = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('[data-widget]')) return;
         if (e.button !== 0) return;
