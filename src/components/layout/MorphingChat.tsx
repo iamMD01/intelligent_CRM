@@ -191,7 +191,7 @@ const MorphingChatInner = ({
                         initial={{ opacity: 0, scale: 0.9, borderRadius: "50px" }}
                         animate={{ opacity: 1, scale: 1, borderRadius: "50px" }}
                         exit={{ opacity: 0, scale: 0.9, borderRadius: "50px" }}
-                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white p-1.5 rounded-full border border-zinc-200 shadow-2xl"
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white dark:bg-zinc-900 p-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 shadow-2xl"
                     >
                         <motion.div
                             key="pill-content"
@@ -203,7 +203,7 @@ const MorphingChatInner = ({
                             transition={{ duration: 0.2 }}
                         >
                             <div
-                                className="bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-900 rounded-full h-12 w-72 flex items-center px-4 cursor-text transition-colors text-left"
+                                className="bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-full h-12 w-72 flex items-center px-4 cursor-text transition-colors text-left"
                                 onClick={() => setViewState("chat")}
                             >
                                 <span className="text-zinc-500 font-medium truncate">Lets Make your intelligent CRM</span>
@@ -249,7 +249,7 @@ const MorphingChatInner = ({
                 {viewState === "history" && (
                     <motion.div
                         layoutId="chat-container"
-                        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-[500px] h-auto flex flex-col shadow-2xl overflow-hidden border border-zinc-200 bg-white"
+                        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-[500px] h-auto flex flex-col shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
                         initial={{ opacity: 0, scale: 0.95, borderRadius: "24px" }}
                         animate={{ opacity: 1, scale: 1, borderRadius: "24px" }}
                         exit={{ opacity: 0, scale: 0.95, borderRadius: "50px" }}
@@ -265,10 +265,10 @@ const MorphingChatInner = ({
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="font-bold text-xl text-zinc-900 tracking-tight">Previous CRM&apos;s</h2>
+                                <h2 className="font-bold text-xl text-zinc-900 dark:text-zinc-100 tracking-tight">Previous CRM&apos;s</h2>
                                 <button
                                     onClick={handleCreateSession}
-                                    className="p-1 hover:bg-zinc-100 rounded-full transition-colors text-zinc-900"
+                                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-900 dark:text-zinc-100"
                                 >
                                     <Plus size={24} className="stroke-[2.5]" />
                                 </button>
@@ -293,14 +293,14 @@ const MorphingChatInner = ({
                                         onMouseLeave={() => setHoveredThreadId(null)}
                                         className={cn(
                                             "flex items-center justify-between group p-2 -mx-2 rounded-xl transition-colors text-left cursor-pointer",
-                                            currentThreadId === item.id ? "bg-zinc-100" : "hover:bg-zinc-50",
+                                            currentThreadId === item.id ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
                                             hoveredThreadId === item.id && "ring-1 ring-red-200"
                                         )}
                                     >
                                         <div className="flex-1 mr-4">
                                             {editingId === item.id ? (
                                                 <input
-                                                    className="w-full bg-transparent font-bold text-lg text-zinc-900 focus:outline-none border-b border-zinc-300"
+                                                    className="w-full bg-transparent font-bold text-lg text-zinc-900 dark:text-zinc-100 focus:outline-none border-b border-zinc-300 dark:border-zinc-700"
                                                     value={editValue}
                                                     onChange={(e) => setEditValue(e.target.value)}
                                                     onBlur={saveTitle}
@@ -312,7 +312,7 @@ const MorphingChatInner = ({
                                                     onClick={(e) => e.stopPropagation()}
                                                 />
                                             ) : (
-                                                <span className="font-bold text-lg text-zinc-900 block truncate">
+                                                <span className="font-bold text-lg text-zinc-900 dark:text-zinc-100 block truncate">
                                                     {item.name ?? `Thread ${item.id.substring(0, 8)}`}
                                                 </span>
                                             )}
@@ -330,17 +330,17 @@ const MorphingChatInner = ({
                             {/* Bottom Bar */}
                             <div className="flex items-center gap-3 mt-auto">
                                 <button
-                                    className="w-14 h-14 rounded-2xl bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center transition-colors text-zinc-900"
+                                    className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center transition-colors text-zinc-900 dark:text-zinc-100"
                                     onClick={() => setViewState("chat")} // Back to chat? Or close?
                                 >
-                                    <div className="w-6 h-6 border-2 border-zinc-900 rounded-md flex items-center justify-center">
-                                        <div className="w-3 h-0.5 bg-zinc-900"></div>
+                                    <div className="w-6 h-6 border-2 border-zinc-900 dark:border-zinc-100 rounded-md flex items-center justify-center">
+                                        <div className="w-3 h-0.5 bg-zinc-900 dark:bg-zinc-100"></div>
                                     </div>
                                 </button>
 
-                                <div className="flex-1 bg-black text-white h-14 rounded-full flex items-center px-6 gap-3">
+                                <div className="flex-1 bg-black dark:bg-white text-white dark:text-black h-14 rounded-full flex items-center px-6 gap-3">
                                     <span className="font-bold text-lg tracking-tight">CCO</span>
-                                    <span className="font-medium text-zinc-300">New and Previous CRM's</span>
+                                    <span className="font-medium text-zinc-300 dark:text-zinc-600">New and Previous CRM's</span>
                                 </div>
 
                                 {/* Theme Toggle Button */}
@@ -350,7 +350,7 @@ const MorphingChatInner = ({
                                         "w-14 h-14 rounded-full flex items-center justify-center transition-colors border-2 shrink-0",
                                         theme === 'dark'
                                             ? "bg-zinc-800 border-zinc-600 hover:bg-zinc-700"
-                                            : "bg-white border-zinc-100 hover:bg-zinc-50"
+                                            : "bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                                     )}
                                 >
                                     {theme === 'dark' ? (
@@ -368,7 +368,7 @@ const MorphingChatInner = ({
                 {viewState === "chat" && (
                     <motion.div
                         layoutId="chat-container"
-                        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-[600px] h-[600px] max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-zinc-200 bg-white"
+                        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-[600px] h-[600px] max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
                         initial={{ opacity: 0, scale: 0.95, borderRadius: "24px" }}
                         animate={{ opacity: 1, scale: 1, borderRadius: "24px" }}
                         exit={{ opacity: 0, scale: 0.95, borderRadius: "50px" }}
@@ -394,7 +394,7 @@ const MorphingChatInner = ({
                                 >
                                     {editingId === currentThreadId && currentThreadId ? (
                                         <input
-                                            className="w-full bg-transparent font-bold text-lg text-zinc-900 focus:outline-none border-b border-zinc-300"
+                                            className="w-full bg-transparent font-bold text-lg text-zinc-900 dark:text-zinc-100 focus:outline-none border-b border-zinc-300 dark:border-zinc-700"
                                             value={editValue}
                                             onChange={(e) => setEditValue(e.target.value)}
                                             onBlur={saveTitle}
@@ -406,12 +406,12 @@ const MorphingChatInner = ({
                                             onClick={(e) => e.stopPropagation()}
                                         />
                                     ) : (
-                                        <h2 className="font-bold text-lg text-zinc-900 tracking-tight cursor-text hover:bg-zinc-50 rounded px-1 -ml-1 transition-colors truncate">
+                                        <h2 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 tracking-tight cursor-text hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded px-1 -ml-1 transition-colors truncate">
                                             {thread?.name ?? "Untitled Adaptive CRM"}
                                         </h2>
                                     )}
                                 </div>
-                                <button onClick={() => setViewState("pill")} className="p-2 hover:bg-zinc-100 rounded-full transition-colors text-zinc-500 hover:text-zinc-900">
+                                <button onClick={() => setViewState("pill")} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                                     <Minimize2 size={20} />
                                 </button>
                             </div>
@@ -436,17 +436,17 @@ const MorphingChatInner = ({
                                             exit={{ opacity: 0, y: 10 }}
                                             className="mb-3 flex items-center gap-2"
                                         >
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-sm">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-full text-sm">
                                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                                <span className="font-medium text-emerald-700">
+                                                <span className="font-medium text-emerald-700 dark:text-emerald-400">
                                                     Editing widget
                                                 </span>
                                                 <button
                                                     onClick={() => selectWidgetForChat(null)}
-                                                    className="ml-1 p-0.5 hover:bg-emerald-100 rounded-full transition-colors"
+                                                    className="ml-1 p-0.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors"
                                                     title="Deselect widget"
                                                 >
-                                                    <X size={14} className="text-emerald-600" />
+                                                    <X size={14} className="text-emerald-600 dark:text-emerald-400" />
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -457,7 +457,7 @@ const MorphingChatInner = ({
                                     {/* Input Pill */}
                                     <div className="flex-1 min-w-0">
                                         <PromptInput
-                                            className="min-h-[56px] flex items-center bg-zinc-50 border border-zinc-200 rounded-full px-4 text-zinc-900 transition-colors shadow-none [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:focus-within:ring-0 [&_[data-slot=input-group]]:focus-within:border-0"
+                                            className="min-h-[56px] flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-4 text-zinc-900 dark:text-zinc-100 transition-colors shadow-none [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:focus-within:ring-0 [&_[data-slot=input-group]]:focus-within:border-0"
                                             onSubmit={async () => {
                                                 if (!value.trim()) return;
                                                 // Play message sent sound
@@ -475,7 +475,7 @@ const MorphingChatInner = ({
                                             <PromptInputTextarea
                                                 value={value}
                                                 onChange={(e) => setValue(e.target.value)}
-                                                className="text-[15px] font-medium leading-relaxed placeholder:font-medium min-h-[40px] bg-transparent border-0 focus:ring-0 resize-none text-zinc-900 placeholder:text-zinc-400 pt-3"
+                                                className="text-[15px] font-medium leading-relaxed placeholder:font-medium min-h-[40px] bg-transparent border-0 focus:ring-0 resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 pt-3"
                                                 placeholder={inputPlaceholder}
                                             />
                                         </PromptInput>
@@ -483,7 +483,7 @@ const MorphingChatInner = ({
 
                                     {/* History Button */}
                                     <button
-                                        className="w-14 h-14 rounded-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 flex items-center justify-center transition-colors text-zinc-900 font-bold text-xs tracking-tighter shrink-0"
+                                        className="w-14 h-14 rounded-full bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center transition-colors text-zinc-900 dark:text-zinc-100 font-bold text-xs tracking-tighter shrink-0"
                                         onClick={() => setViewState("history")}
                                     >
                                         CCO
@@ -506,15 +506,15 @@ const MorphingChatInner = ({
                                         )}
                                     </button>
                                 </div>
-                                <div className="flex justify-between items-center mt-3 px-4 text-xs text-zinc-600 font-medium">
+                                <div className="flex justify-between items-center mt-3 px-4 text-xs text-zinc-600 dark:text-zinc-400 font-medium">
                                     <span>AI can make mistakes. Check important info.</span>
-                                    <History size={14} className="cursor-pointer hover:text-zinc-400 transition-colors" />
+                                    <History size={14} className="cursor-pointer hover:text-zinc-400 dark:hover:text-zinc-200 transition-colors" />
                                 </div>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
         </>
     );
 };

@@ -168,8 +168,8 @@ const ThreadContentMessages = React.forwardRef<
                 <MessageContent
                   className={
                     message.role === "assistant"
-                      ? "text-zinc-900 font-sans text-lg" // Updated for light mode
-                      : "text-foreground bg-container hover:bg-backdrop font-sans"
+                      ? "text-zinc-900 dark:text-zinc-100 font-sans text-lg" // Updated for light/dark
+                      : "text-foreground bg-container dark:bg-zinc-800 hover:bg-backdrop dark:hover:bg-zinc-700 font-sans"
                   }
                 />
                 <ToolcallInfo />
