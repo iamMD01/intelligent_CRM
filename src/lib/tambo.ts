@@ -18,6 +18,7 @@ import type { TamboComponent } from "@tambo-ai/react";
 import { TamboTool } from "@tambo-ai/react";
 import { z } from "zod";
 import { useCRMStore } from "@/lib/crm-store";
+import { CRM_DATA } from "@/lib/mock-data";
 
 /**
  * tools
@@ -31,6 +32,35 @@ export const tools: TamboTool[] = [
     tool: async () => new Date().toISOString(),
     inputSchema: z.object({}),
     outputSchema: z.string(),
+  },
+  {
+    name: "fetchCRMData",
+    description: "Fetch real CRM data (Deals, Pipeline, Revenue, Team) from the database. always use this before generating a widget to get the data.",
+    inputSchema: z.object({
+      query: z.string().describe("What data to fetch? (leads, deals, revenue, team, pipeline)"),
+    }),
+    outputSchema: z.string(),
+    tool: async ({ query }) => {
+      const q = query.toLowerCase();
+      let data: any = null;
+
+      if (q.includes("pipeline") || q.includes("stage")) {
+        data = CRM_DATA.pipeline;
+      } else if (q.includes("deal") || q.includes("recent")) {
+        data = CRM_DATA.recentDeals;
+      } else if (q.includes("revenue") || q.includes("money") || q.includes("trend")) {
+        data = CRM_DATA.revenueHistory;
+      } else if (q.includes("team") || q.includes("rep") || q.includes("sales")) {
+        data = CRM_DATA.teamPerformance;
+      } else {
+        data = {
+          suggestedQueries: ["Show pipeline", "Recent deals", "Revenue history", "Team performance"],
+          error: "Could not match query to data category."
+        };
+      }
+
+      return JSON.stringify(data, null, 2);
+    },
   },
   {
     name: "focusOnWidget",
